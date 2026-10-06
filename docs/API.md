@@ -107,7 +107,7 @@ Usada por `create_tournament` y por la UI para mostrar/ocultar CTA.
 | `api/registrations.ts` | `isJoined(tournamentId, userId)`, `participants(tournamentId)`, `joinTournament(tournamentId, userId?)`, `leaveTournament(...)` |
 | `api/matches.ts`       | `bracketOf(tournamentId)` (ordenado por `slot`), `nextMatchFor(matches, playerId)`                                              |
 | `api/standings.ts`     | `standingsOf(tournamentId)` → filas del podio (lógica de `standingsOf` de `bracket.ts`, calculada en cliente sobre los matches) |
-| `api/elo.ts`           | `rankingFor(gameId)`, `eloOf(playerId, gameId)`                                                                                 |
+| `api/elo.ts`           | `rankingFor(gameId)` → `{playerId, elo: EloRecord}[]`, `eloOf(playerId, gameId)` → `EloRecord`                                    |
 | `api/players.ts`       | `getProfile(id)`, `searchPlayers(q)`                                                                                            |
 | `api/notifications.ts` | `listMine()`, `unreadCount()`, `markAllRead()`                                                                                  |
 | `api/settings.ts`      | `getSettings()`, `updateSetting(patch)` (claves snake_case de `profiles.settings`)                                              |

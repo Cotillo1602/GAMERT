@@ -155,11 +155,11 @@ describe("elo", () => {
     const rows = await rankingFor("fifa26");
     expect(rows.length).toBeGreaterThan(3);
     for (let i = 1; i < rows.length; i++) {
-      expect(rows[i - 1].rating).toBeGreaterThanOrEqual(rows[i].rating);
+      expect(rows[i - 1].elo.rating).toBeGreaterThanOrEqual(rows[i].elo.rating);
     }
     const mine = rows.find((r) => r.playerId === CURRENT_USER_ID);
-    expect(mine?.rating).toBe(baseElo(CURRENT_USER_ID, "fifa26").rating);
-    expect(await eloOf(CURRENT_USER_ID, "fifa26")).toBe(mine?.rating);
+    expect(mine?.elo.rating).toBe(baseElo(CURRENT_USER_ID, "fifa26").rating);
+    expect((await eloOf(CURRENT_USER_ID, "fifa26")).rating).toBe(mine?.elo.rating);
   });
 
   it("refleja los overrides del estado vivo", async () => {
@@ -171,10 +171,10 @@ describe("elo", () => {
         [`${CURRENT_USER_ID}:fifa26`]: { ...current, rating: 4000 },
       },
     }));
-    expect(await eloOf(CURRENT_USER_ID, "fifa26")).toBe(4000);
+    expect((await eloOf(CURRENT_USER_ID, "fifa26")).rating).toBe(4000);
     const rows = await rankingFor("fifa26");
     expect(rows[0].playerId).toBe(CURRENT_USER_ID);
-    expect(rows[0].rating).toBe(4000);
+    expect(rows[0].elo.rating).toBe(4000);
   });
 });
 
