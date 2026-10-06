@@ -1,0 +1,111 @@
+/* ============================================================
+   GAMERT — Design tokens
+   Extraídos del archivo Figma "APP GAMERT.fig"
+   Página "Internal Only Canvas" → nodos Color/* y Text/*
+   ============================================================ */
+
+:root {
+  /* ---------- Color (nodos ROUNDED_RECTANGLE "Color/*") ---------- */
+  --c-primary: #6c3cff; /* Color/Primary    */
+  --c-secondary: #8a5cff; /* Color/Secondary  */
+  --c-bg: #0b0b12; /* Color/Backgorund */
+  --c-surface: #141821; /* Color/Surface    */
+  --c-text: #f5f5ff; /* Color/text       */
+  --c-error: #ef4444; /* Color/Error      */
+  --c-success: #22c55e; /* Color/Succes     */
+  --c-warning: #f59e0b; /* Color/Warning    */
+  --c-info: #3b82f6; /* Color/Info       */
+  --c-disabled: #2a2d3a; /* Color/Disable    */
+  --c-disabled-fg: #8e8e93; /* Color/DIsable   */
+
+  /* ---------- Gray (nodos "Gray/*") ---------- */
+  --c-gray-titles: #1f2937;
+  --c-gray-body: #6b7280;
+  --c-gray-placeholder: #9ca3af;
+  --c-gray-border: #e5e7eb;
+  --c-gray-bg: #f9fafb;
+
+  /* ---------- Accents / derivados de losINSTANCE ---------- */
+  --c-accent: #690ab2; /* Relleno del logo  */
+  --c-outline: #8a38f5; /* Stroke de List Item */
+  --c-toggle-on: #9d4edd; /* Símbolo Toggle "State=On"  */
+  --c-primary-soft: rgba(108, 60, 255, 0.16);
+  --c-primary-line: rgba(108, 60, 255, 0.38);
+  --c-overlay: rgba(4, 4, 10, 0.72);
+
+  /* ---------- Superficies (escala) ---------- */
+  --bg-app: var(--c-bg);
+  --bg-base: var(--c-bg);
+  --bg-elev-1: var(--c-surface);
+  --bg-elev-2: #1b2030;
+  --bg-elev-3: #232939;
+  --bg-inset: #0f121b;
+  --border-subtle: rgba(245, 245, 255, 0.08);
+  --border-default: rgba(245, 245, 255, 0.12);
+  --border-strong: rgba(245, 245, 255, 0.2);
+
+  /* ---------- Texto ----------
+     Los nodos Gray/* del Figma están calibrados sobre fondo claro.
+     Aquí se reajustan a la variante dark manteniendo el mismo rol. */
+  --fg: var(--c-text);
+  --fg-secondary: #b4b6c6;
+  --fg-tertiary: #7d8093;
+  --fg-on-primary: #ffffff;
+
+  /* ---------- Tipografía ---------- */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-display: "Orbitron", "Inter", system-ui, sans-serif;
+
+  /* Escala Text/* del design system */
+  --fs-h1: 32px;
+  --fs-h2: 24px;
+  --fs-subheading: 18px;
+  --fs-body: 16px;
+  --fs-caption: 14px;
+  --fs-button: 16px;
+  --fs-caption-2: 12px;
+  --fs-caption-3: 11px;
+  --fs-logo: 64px;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* ---------- Espaciado (variables Spacing XS→XXL) ---------- */
+  --sp-xs: 4px;
+  --sp-s: 8px;
+  --sp-m: 12px;
+  --sp-l: 16px;
+  --sp-xl: 24px;
+  --sp-xxl: 32px;
+  --page-pad: 16px; /* 393 - 361 = 32 → 16 por lado */
+
+  /* ---------- Radios ---------- */
+  --r-sm: 5px;
+  --r-md: 10px; /* Button */
+  --r-lg: 14px; /* List Item */
+  --r-xl: 15.2px; /* Cards */
+  --r-2xl: 24.5px; /* Modal */
+  --r-pill: 100px;
+
+  /* ---------- Elevación ---------- */
+  --sh-card: 0 1px 0 rgba(245, 245, 255, 0.05) inset;
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-primary: 0 8px 24px rgba(108, 60, 255, 0.35);
+
+  /* ---------- Movimiento ---------- */
+  --ease: cubic-bezier(0.4, 0, 0.579999, 1);
+  --dur-fast: 140ms;
+  --dur: 240ms;
+  --dur-slow: 400ms;
+
+  /* ---------- Layout ---------- */
+  --screen-w: 393px;
+  --screen-h: 852px;
+  --appbar-h: 48px;
+  --tabbar-h: 85px;
+  --safe-top: 47px;
+  --safe-bottom: 24px;
+}

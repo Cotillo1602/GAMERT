@@ -1,0 +1,144 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-s);
+  border-radius: var(--r-md);
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease),
+    opacity var(--dur-fast) var(--ease);
+  position: relative;
+  user-select: none;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.975);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- tamaños (alto según el Figma) ---------- */
+.btn--sm {
+  height: 32px;
+  padding: 0 var(--sp-m);
+  font-size: var(--fs-caption-2);
+}
+.btn--md {
+  height: 40px;
+  padding: 0 var(--sp-l);
+  font-size: var(--fs-caption);
+}
+.btn--lg {
+  height: 52px;
+  padding: 0 var(--sp-xl);
+  font-size: var(--fs-body);
+}
+.btn--pill {
+  height: 60px;
+  padding: 0 var(--sp-xl);
+  font-size: var(--fs-body);
+  border-radius: var(--r-pill);
+}
+
+/* ---------- variantes ---------- */
+.btn--primary {
+  background: var(--c-primary);
+  color: var(--fg-on-primary);
+  box-shadow: var(--shadow-primary);
+}
+.btn--primary:hover:not(:disabled) {
+  background: var(--c-secondary);
+}
+
+.btn--secondary {
+  background: var(--c-primary-soft);
+  color: var(--c-secondary);
+  border: 1px solid var(--c-primary-line);
+}
+.btn--secondary:hover:not(:disabled) {
+  background: rgba(108, 60, 255, 0.26);
+}
+
+.btn--surface {
+  background: var(--bg-elev-2);
+  color: var(--fg);
+  border: 1px solid var(--border-subtle);
+}
+.btn--surface:hover:not(:disabled) {
+  background: var(--bg-elev-3);
+}
+
+.btn--outline {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border-default);
+}
+.btn--outline:hover:not(:disabled) {
+  border-color: var(--c-primary);
+  color: var(--c-secondary);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--fg-secondary);
+}
+.btn--ghost:hover:not(:disabled) {
+  background: var(--bg-elev-1);
+  color: var(--fg);
+}
+
+.btn--danger {
+  background: transparent;
+  color: var(--c-error);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+.btn--danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+/* ---------- loading ---------- */
+.btn.is-loading .btn__label {
+  opacity: 0.85;
+}
+
+.btn__spinner {
+  display: inline-block;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-top-color: #fff;
+  animation: btn-spin 0.7s linear infinite;
+  flex: none;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-group {
+  display: flex;
+  gap: var(--sp-s);
+}
+.btn-group > .btn {
+  flex: 1;
+}

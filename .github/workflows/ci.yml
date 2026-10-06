@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      # Migración + seed contra Postgres real (PGlite) y smoke tests de RPC/RLS
+      - run: npm run db:check
+      # ADR-10: el seed se regenera desde src/data
+      - name: Seed reproducible
+        run: |
+          npm run seed:gen
+          git diff --exit-code -- supabase/seed.sql
+      # Tipos de Supabase regenerados desde la migración (docs/DATABASE.md §6)
+      - name: Tipos reproducibles
+        run: |
+          npm run types:gen
+          git diff --exit-code -- src/lib/api/database.types.ts
+      - run: npm run build
+      # ADR-02/03: supabase-js sólo detrás de src/lib/api
+      - name: Cliente Supabase encapsulado
+        run: |
+          if grep -rln --include='*.ts' --include='*.tsx' "@supabase/supabase-js" src \
+            | grep -v "^src/lib/api/" | grep -v "^src/lib/api$"; then
+            echo "Importa @supabase/supabase-js fuera de src/lib/api"
+            exit 1
+          fi

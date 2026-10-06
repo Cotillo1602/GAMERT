@@ -1,0 +1,201 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.field__label {
+  font-size: var(--fs-caption-2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-secondary);
+}
+
+.field__box {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-s);
+  background: var(--bg-elev-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  padding: 0 var(--sp-m);
+  height: 52px;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.field__box:focus-within {
+  border-color: var(--c-primary);
+  background: var(--bg-elev-2);
+  box-shadow: 0 0 0 3px rgba(108, 60, 255, 0.18);
+}
+
+.field--error .field__box {
+  border-color: var(--c-error);
+}
+.field--error .field__box:focus-within {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
+}
+
+.field__icon {
+  color: var(--fg-tertiary);
+  display: flex;
+  flex: none;
+}
+
+.field__input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: none;
+  color: var(--fg);
+  font-size: var(--fs-body);
+}
+.field__input--pad {
+  padding-right: 44px;
+}
+.field__input::placeholder {
+  color: var(--fg-tertiary);
+}
+
+.field__toggle {
+  position: absolute;
+  right: 4px;
+  display: flex;
+  padding: 8px;
+  color: var(--fg-secondary);
+  border-radius: var(--r-sm);
+}
+.field__toggle:hover {
+  color: var(--fg);
+}
+.field__box:has(.field__toggle) {
+  position: relative;
+}
+
+.field__msg {
+  margin: 0;
+  font-size: var(--fs-caption-3);
+  color: var(--fg-tertiary);
+}
+.field__msg--error {
+  color: var(--c-error);
+}
+
+/* ---------- SearchBar ---------- */
+.searchbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-s);
+  height: 40px;
+  padding: 0 var(--sp-m);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  transition: border-color var(--dur-fast) var(--ease);
+}
+.searchbar:focus-within {
+  border-color: var(--c-primary);
+}
+.searchbar__icon {
+  color: var(--fg-tertiary);
+  flex: none;
+}
+.searchbar__input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: none;
+  color: var(--fg);
+  font-size: var(--fs-caption);
+}
+.searchbar__input::placeholder {
+  color: var(--fg-tertiary);
+}
+.searchbar__clear {
+  color: var(--fg-secondary);
+  display: flex;
+  flex: none;
+}
+.searchbar__clear:hover {
+  color: var(--fg);
+}
+
+/* ---------- Checkbox ---------- */
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-m);
+  cursor: pointer;
+  user-select: none;
+}
+.check input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.check__box {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border-strong);
+  background: var(--bg-elev-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-on-primary);
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+.check__box.is-checked {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+}
+.check input:focus-visible + .check__box {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+}
+.check__label {
+  font-size: var(--fs-caption);
+  color: var(--fg-secondary);
+}
+
+/* ---------- Toggle ---------- */
+.toggle {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  flex: none;
+  border-radius: var(--r-pill);
+  background: var(--c-disabled);
+  transition: background var(--dur) var(--ease);
+}
+.toggle.is-on {
+  background: var(--c-toggle-on);
+}
+.toggle__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #d9d9d9;
+  transition:
+    transform var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+.toggle.is-on .toggle__knob {
+  transform: translateX(24px);
+  background: #fff;
+}

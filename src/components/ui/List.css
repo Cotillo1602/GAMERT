@@ -1,0 +1,196 @@
+/* ============================================================
+   List Item — 393×48 / radius 14 / stroke #8a38f5
+   ============================================================ */
+
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-m);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--sp-s) var(--sp-l);
+  background: var(--bg-elev-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  color: var(--fg);
+  text-align: left;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.list-item:hover {
+  background: var(--bg-elev-2);
+  border-color: var(--border-default);
+}
+
+.list-item.is-selected {
+  border-color: var(--c-outline);
+  background: var(--c-primary-soft);
+}
+
+.list-item__icon {
+  color: var(--c-secondary);
+  flex: none;
+}
+
+.list-item__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.list-item__label {
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-item__caption {
+  font-size: var(--fs-caption-3);
+  color: var(--fg-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-item__chevron {
+  color: var(--fg-tertiary);
+  flex: none;
+}
+
+/* ============================================================
+   List Tile
+   ============================================================ */
+
+.list-tile {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-m);
+  width: 100%;
+  padding: var(--sp-m);
+  background: var(--bg-elev-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-xl);
+  color: var(--fg);
+  text-align: left;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.list-tile:hover {
+  background: var(--bg-elev-2);
+  border-color: var(--border-default);
+}
+
+.list-tile:active {
+  transform: scale(0.99);
+}
+
+.list-tile.is-selected {
+  border-color: var(--c-outline);
+  background: var(--c-primary-soft);
+}
+
+.list-tile__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.list-tile__title {
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-tile__subtitle {
+  font-size: var(--fs-caption-3);
+  color: var(--fg-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-tile__meta {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  color: var(--fg-secondary);
+  font-size: var(--fs-caption-3);
+}
+
+/* ============================================================
+   Avatar Row
+   ============================================================ */
+
+.avatar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-m);
+  width: 100%;
+  padding: var(--sp-s) 0;
+  color: var(--fg);
+  text-align: left;
+}
+
+.avatar-row--btn {
+  border-radius: var(--r-lg);
+  transition: background var(--dur-fast) var(--ease);
+}
+.avatar-row--btn:hover {
+  background: var(--bg-elev-1);
+}
+
+.avatar-row__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.avatar-row__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar-row__elo {
+  font-size: var(--fs-caption-3);
+  font-weight: var(--fw-semibold);
+  color: var(--c-secondary);
+  letter-spacing: 0.06em;
+}
+
+.avatar-row__caption {
+  font-size: var(--fs-caption-3);
+  color: var(--fg-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar-row__trailing {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-s);
+}
