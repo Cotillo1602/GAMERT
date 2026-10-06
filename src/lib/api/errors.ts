@@ -25,7 +25,13 @@ const map: Record<string, string> = {
   INVALID_SCORE: "El marcador no es válido",
   AWAITING_RIVAL: "El rival debe confirmar",
   CANNOT_DISPUTE_OWN: "No puedes disputar tu propio reporte",
+  BRACKET_STARTED: "El cuadro ya comenzó, no puedes retirarte",
+  NOT_IMPLEMENTED: "Esta función aún no está conectada a Supabase",
 };
+
+export function errorFromCode(code: string): AppError {
+  return { code, message: map[code] ?? code };
+}
 
 export function toAppError(
   e: PostgrestError | { code?: string; message?: string } | string,

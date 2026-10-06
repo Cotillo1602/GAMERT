@@ -29,7 +29,7 @@
 
 **Criterio de salida:** CI verde en `main`.
 
-## Fase 2 — Backend (Supabase) (🔄 en curso)
+## Fase 2 — Backend (Supabase) (✅ completada)
 
 | Tarea                               | Notas                                                                                                                                                                                        |
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -46,21 +46,21 @@
 `psql` (inscribir → cuadro → resultados → ELO). Mientras no haya SQL local,
 `npm run db:check` cubre el mismo recorrido.
 
-## Fase 3 — Migración del frontend a datos reales
+## Fase 3 — Migración del frontend a datos reales (🔄 en curso)
 
-| Tarea                                                 | Notas                                  |
-| ----------------------------------------------------- | -------------------------------------- |
-| `src/lib/api/*` con fallback demo                     | ADR-02/03                              |
-| TanStack Query + `AuthProvider`                       | reemplaza persistencia de `AppContext` |
-| `Login`/`Registro` con Supabase Auth (email + Google) |                                        |
-| `Home`, `Torneos`, `DetalleTorneo` sobre queries      |                                        |
-| `Inscripcion` → RPC `join_tournament`                 | mensajes de error del §5 de API.md     |
-| `Cuadro`/`Resultado` → RPC + realtime                 |                                        |
-| `Ranking`/`Clasificacion` → `elo_ratings`             |                                        |
-| `CrearTorneo` → RPC `create_tournament` + Zod         |                                        |
-| `Notificaciones` → tabla + realtime                   |                                        |
-| `Configuracion` → `profiles.settings`                 |                                        |
-| Limpieza: eliminar seeds no usados                    | sólo tras el cambio de cada pantalla   |
+| Tarea                                                 | Notas                                                                                                                               |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/api/*` con fallback demo                     | ✅ ADR-02/03: `demo-store` compartido con `AppContext` (`gamert:state-changed`), mutaciones con validaciones de la RPC, `queryKeys` |
+| TanStack Query + `AuthProvider`                       | reemplaza persistencia de `AppContext`                                                                                              |
+| `Login`/`Registro` con Supabase Auth (email + Google) |                                                                                                                                     |
+| `Home`, `Torneos`, `DetalleTorneo` sobre queries      |                                                                                                                                     |
+| `Inscripcion` → RPC `join_tournament`                 | mensajes de error del §5 de API.md                                                                                                  |
+| `Cuadro`/`Resultado` → RPC + realtime                 |                                                                                                                                     |
+| `Ranking`/`Clasificacion` → `elo_ratings`             |                                                                                                                                     |
+| `CrearTorneo` → RPC `create_tournament` + Zod         |                                                                                                                                     |
+| `Notificaciones` → tabla + realtime                   |                                                                                                                                     |
+| `Configuracion` → `profiles.settings`                 |                                                                                                                                     |
+| Limpieza: eliminar seeds no usados                    | sólo tras el cambio de cada pantalla                                                                                                |
 
 **Criterio de salida:** `npm run build` sin imports de `src/data` fuera de
 `src/lib/api` (verificado con grep en CI) y flujo completo con backend real.

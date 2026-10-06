@@ -103,14 +103,21 @@ Usada por `create_tournament` y por la UI para mostrar/ocultar CTA.
 | Módulo                 | Consultas principales                                                                                                           |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `api/games.ts`         | `listGames()`, `getGame(id)`                                                                                                    |
-| `api/tournaments.ts`   | `listTournaments({gameId, status})`, `getTournament(id)`, `listMyTournaments()`, `listOrganizedBy(me)`                          |
-| `api/registrations.ts` | `isJoined(tournamentId)`, `participants(tournamentId)`                                                                          |
-| `api/matches.ts`       | `bracketOf(tournamentId)` (ordenado por `slot`), `nextMatchFor(playerId)`                                                       |
+| `api/tournaments.ts`   | `listTournaments({gameId, status})`, `getTournament(id)`, `listMyTournaments(userId)`, `listOrganizedBy(userId)`                |
+| `api/registrations.ts` | `isJoined(tournamentId, userId)`, `participants(tournamentId)`, `joinTournament(tournamentId, userId?)`, `leaveTournament(...)` |
+| `api/matches.ts`       | `bracketOf(tournamentId)` (ordenado por `slot`), `nextMatchFor(matches, playerId)`                                              |
 | `api/standings.ts`     | `standingsOf(tournamentId)` → filas del podio (lógica de `standingsOf` de `bracket.ts`, calculada en cliente sobre los matches) |
 | `api/elo.ts`           | `rankingFor(gameId)`, `eloOf(playerId, gameId)`                                                                                 |
 | `api/players.ts`       | `getProfile(id)`, `searchPlayers(q)`                                                                                            |
 | `api/notifications.ts` | `listMine()`, `unreadCount()`, `markAllRead()`                                                                                  |
-| `api/settings.ts`      | `updateSetting(key, value)` (patch a `profiles.settings`)                                                                       |
+| `api/settings.ts`      | `getSettings()`, `updateSetting(patch)` (claves snake_case de `profiles.settings`)                                              |
+
+**Modo demo** (`isDemoMode()`, sin `VITE_SUPABASE_URL`): cada módulo opera sobre
+`src/lib/api/demo-store.ts`, el mismo snapshot `gamert:state:v2` que usa
+`AppContext`. Las escrituras pasan por `commitState()`, que guarda y publica el
+evento `gamert:state-changed`; el `AppContext` se rehidrata al escucharlo y él
+persiste con `saveState()` (sin evento), así que no hay bucles ni estados
+divergentes entre la capa API y las pantallas.
 
 Todas se exponen como hooks TanStack Query con `queryKey` canónica:
 

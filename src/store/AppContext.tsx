@@ -23,7 +23,6 @@ import { rateMatch, type EloRecord } from "../lib/elo";
 import type { GameId } from "../data/games";
 import { CURRENT_USER_ID, eloOf as baseElo, getPlayer, playerName, players } from "../data/players";
 import {
-  allTournaments,
   isScheduledToday,
   rulesText,
   todayISO,
@@ -34,12 +33,19 @@ import {
 import {
   canPayCash,
   publishers,
-  seedNotifications,
-  walletHistory,
   type AppNotification,
   type PublisherAccount,
   type WalletMovement,
 } from "../data/app";
+import {
+  clearState,
+  defaultSettings,
+  defaultState,
+  loadState,
+  onStateChanged,
+  saveState,
+  type Settings,
+} from "../lib/api/demo-store";
 
 /* ============================================================
    Estado global.
@@ -49,14 +55,6 @@ import {
    - la app siembra, arma el cuadro, asigna horarios, gestiona el
      resultado de cada partida, resuelve disputas y mueve el ELO.
    ============================================================ */
-
-export interface Settings {
-  profilePrivate: boolean;
-  securityAndPassword: boolean;
-  sounds: boolean;
-  language: boolean;
-  pushNotifications: boolean;
-}
 
 export interface CreateTournamentInput {
   name: string;
@@ -137,107 +135,28 @@ export interface AppState {
 
 const Ctx = createContext<AppState | null>(null);
 
-export const defaultSettings: Settings = {
-  profilePrivate: false,
-  securityAndPassword: false,
-  sounds: false,
-  language: false,
-  pushNotifications: true,
-};
-
-const START_BALANCE = 250;
-const STORAGE_KEY = "gamert:state:v2";
-
-/* ---------- estado inicial: el torneo que ya está en vivo ---------- */
-
-const LIVE_SEEDS = ["u1", "u2", "u6", "u9", "u3", "u11", "u4", "u10", "u5", "u8", "u7", "u12"];
-
-function seedBrackets(): Record<string, Match[]> {
-  const matches = scheduleRounds("summer-cup-fifa26", LIVE_SEEDS, "2026-02-10T18:00:00");
-
-  // con 12 jugadores en un cuadro de 16, las cruces reales son los slots 1, 3, 5 y 7
-  const played: Array<{ slot: number; scoreA: number; scoreB: number }> = [
-    { slot: 1, scoreA: 3, scoreB: 1 },
-    { slot: 3, scoreA: 2, scoreB: 2 },
-    { slot: 5, scoreA: 0, scoreB: 2 },
-    { slot: 7, scoreA: 4, scoreB: 0 },
-  ];
-
-  let current = matches;
-  for (const p of played) {
-    const src = current.find((m) => m.slot === p.slot);
-    if (!src || isBye(src)) continue;
-    const withScore = current.map((m) =>
-      m.id === src.id
-        ? {
-            ...m,
-            scoreA: p.scoreA,
-            scoreB: p.scoreB,
-            status: "confirmed" as const,
-            reportedBy: m.a,
-          }
-        : m,
-    );
-    current = settleMatch(withScore, src.id);
-  }
-
-  return { "summer-cup-fifa26": current };
-}
-
 /** Momento de inicio de un torneo, interpretado en la hora local del dispositivo. */
 function startsAtOf(t: Tournament): Date {
   return new Date(`${t.date}T${t.time}:00`);
 }
 
-/* ---------- persistencia ---------- */
-
-interface Persisted {
-  authenticated: boolean;
-  balance: number;
-  tournaments: Tournament[];
-  brackets: Record<string, Match[]>;
-  registrations: Record<string, string[]>;
-  notifications: AppNotification[];
-  wallet: WalletMovement[];
-  settings: Settings;
-  eloOverrides: Record<string, EloRecord>;
-}
-
-function loadPersisted(): Partial<Persisted> {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Partial<Persisted>) : {};
-  } catch {
-    return {};
-  }
-}
-
 export function AppProvider({ children }: { children: ReactNode }) {
-  const persisted = useMemo(() => loadPersisted(), []);
+  const initial = useMemo(() => loadState(), []);
 
-  const [authenticated, setAuthenticated] = useState(persisted.authenticated ?? false);
-  const [balance, setBalance] = useState(persisted.balance ?? START_BALANCE);
-  const [tournaments, setTournaments] = useState<Tournament[]>(
-    persisted.tournaments ?? allTournaments(),
-  );
-  const [brackets, setBrackets] = useState<Record<string, Match[]>>(
-    persisted.brackets ?? seedBrackets(),
-  );
+  const [authenticated, setAuthenticated] = useState(initial.authenticated);
+  const [balance, setBalance] = useState(initial.balance);
+  const [tournaments, setTournaments] = useState<Tournament[]>(initial.tournaments);
+  const [brackets, setBrackets] = useState<Record<string, Match[]>>(initial.brackets);
   const [registrations, setRegistrations] = useState<Record<string, string[]>>(
-    persisted.registrations ?? { [CURRENT_USER_ID]: ["summer-cup-fifa26"] },
+    initial.registrations,
   );
-  const [items, setItems] = useState<AppNotification[]>(
-    persisted.notifications ?? seedNotifications,
-  );
-  const [wallet, setWallet] = useState<WalletMovement[]>(persisted.wallet ?? walletHistory);
-  const [settings, setSettings] = useState<Settings>(persisted.settings ?? defaultSettings);
-  const [eloOverrides, setEloOverrides] = useState<Record<string, EloRecord>>(
-    persisted.eloOverrides ?? {},
-  );
+  const [items, setItems] = useState<AppNotification[]>(initial.notifications);
+  const [wallet, setWallet] = useState<WalletMovement[]>(initial.wallet);
+  const [settings, setSettings] = useState<Settings>(initial.settings);
+  const [eloOverrides, setEloOverrides] = useState<Record<string, EloRecord>>(initial.eloOverrides);
 
   useEffect(() => {
-    const snapshot: Persisted = {
+    saveState({
       authenticated,
       balance,
       tournaments,
@@ -247,12 +166,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       wallet,
       settings,
       eloOverrides,
-    };
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
-    } catch {
-      /* sin persistencia disponible: la app sigue funcionando en memoria */
-    }
+    });
   }, [
     authenticated,
     balance,
@@ -264,6 +178,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     settings,
     eloOverrides,
   ]);
+
+  useEffect(
+    () =>
+      onStateChanged(() => {
+        const s = loadState();
+        setAuthenticated(s.authenticated);
+        setBalance(s.balance);
+        setTournaments(s.tournaments);
+        setBrackets(s.brackets);
+        setRegistrations(s.registrations);
+        setItems(s.notifications);
+        setWallet(s.wallet);
+        setSettings(s.settings);
+        setEloOverrides(s.eloOverrides);
+      }),
+    [],
+  );
 
   /* ---------------- helpers ---------------- */
 
@@ -749,20 +680,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const reset = useCallback(() => {
-    setAuthenticated(false);
-    setBalance(START_BALANCE);
-    setTournaments(allTournaments());
-    setBrackets(seedBrackets());
-    setRegistrations({ [CURRENT_USER_ID]: ["summer-cup-fifa26"] });
-    setItems(seedNotifications);
-    setWallet(walletHistory);
-    setSettings(defaultSettings);
-    setEloOverrides({});
-    try {
-      window.localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      /* sin persistencia disponible */
-    }
+    const fresh = defaultState();
+    setAuthenticated(fresh.authenticated);
+    setBalance(fresh.balance);
+    setTournaments(fresh.tournaments);
+    setBrackets(fresh.brackets);
+    setRegistrations(fresh.registrations);
+    setItems(fresh.notifications);
+    setWallet(fresh.wallet);
+    setSettings(fresh.settings);
+    setEloOverrides(fresh.eloOverrides);
+    clearState();
   }, []);
 
   const value = useMemo<AppState>(
@@ -853,5 +781,6 @@ export function useApp(): AppState {
   return v;
 }
 
-export { rulesText, getPlayer, publishers };
+export { rulesText, getPlayer, publishers, defaultSettings };
 export type { PublisherAccount, Match, Tournament, GameId, Prize, Rules, StandingRow };
+export type { Settings };

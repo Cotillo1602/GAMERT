@@ -1,3 +1,5 @@
+import { CURRENT_USER_ID } from "../../data/players";
+import { commitState, loadState } from "./demo-store";
 import { isDemoMode } from "./utils";
 import { getSupabaseClient } from "./supabase-client";
 import { type AppError, toAppError } from "./errors";
@@ -8,37 +10,44 @@ export interface Session {
   name?: string;
 }
 
-const DEMO_USER: Session = { userId: "u1", email: "demo@gamert.dev", name: "Demo" };
+const DEMO_EMAIL = "demo@gamert.dev";
+const DEMO_USER: Session = { userId: CURRENT_USER_ID, email: DEMO_EMAIL, name: "Demo" };
 
-export async function signIn(_email: string, _password: string): Promise<Session> {
-  if (isDemoMode()) return Promise.resolve(DEMO_USER);
+export async function signIn(email: string, password: string): Promise<Session> {
+  if (isDemoMode()) {
+    commitState((s) => ({ ...s, authenticated: true }));
+    return { ...DEMO_USER };
+  }
   try {
     const client = getSupabaseClient();
-    const { data, error } = await client.auth.signInWithPassword({
-      email: _email,
-      password: _password,
-    });
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    return { userId: data.user.id, email: data.user.email ?? _email };
+    return { userId: data.user.id, email: data.user.email ?? email };
   } catch (e) {
     throw toAppError(e as AppError);
   }
 }
 
-export async function signUp(_email: string, _password: string, _name: string): Promise<Session> {
-  if (isDemoMode()) return Promise.resolve({ userId: "new", email: _email, name: _name });
+export async function signUp(email: string, password: string, name: string): Promise<Session> {
+  if (isDemoMode()) {
+    commitState((s) => ({ ...s, authenticated: true }));
+    return { userId: CURRENT_USER_ID, email, name };
+  }
   try {
     const client = getSupabaseClient();
-    const { data, error } = await client.auth.signUp({ email: _email, password: _password });
+    const { data, error } = await client.auth.signUp({ email, password });
     if (error) throw error;
-    return { userId: data.user?.id ?? "new", email: _email, name: _name };
+    return { userId: data.user?.id ?? "new", email, name };
   } catch (e) {
     throw toAppError(e as AppError);
   }
 }
 
 export async function signOut(): Promise<void> {
-  if (isDemoMode()) return Promise.resolve();
+  if (isDemoMode()) {
+    commitState((s) => ({ ...s, authenticated: false }));
+    return;
+  }
   try {
     const client = getSupabaseClient();
     await client.auth.signOut();
@@ -48,7 +57,7 @@ export async function signOut(): Promise<void> {
 }
 
 export async function getSession(): Promise<Session | null> {
-  if (isDemoMode()) return Promise.resolve(null);
+  if (isDemoMode()) return loadState().authenticated ? { ...DEMO_USER } : null;
   try {
     const client = getSupabaseClient();
     const { data } = await client.auth.getSession();
