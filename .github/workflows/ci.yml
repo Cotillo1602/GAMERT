@@ -40,3 +40,10 @@ jobs:
             echo "Importa @supabase/supabase-js fuera de src/lib/api"
             exit 1
           fi
+      # Fase 3: las pantallas no importan src/data directamente
+      - name: Pantallas sin src/data
+        run: |
+          if grep -rln --include='*.ts' --include='*.tsx' "\.\./data/" src/screens src/components; then
+            echo "Una pantalla/componente importa datos directamente (debe ir vía src/lib/api)"
+            exit 1
+          fi
