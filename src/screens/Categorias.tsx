@@ -5,8 +5,7 @@ import { Cover, Badge, SectionTitle } from "../components/ui/Display";
 import { ListItem } from "../components/ui/List";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
-import { GAMES, getGame, isEASportsPath, type GameId } from "../data/games";
-import { publisherFor } from "../data/app";
+import { useGame, useGames, useElo, useOrganizers, useTournaments } from "../lib/api/hooks";
 import { eloTier } from "../lib/elo";
 import { useApp } from "../store/AppContext";
 import { EmptyState } from "./Torneos";
@@ -20,8 +19,9 @@ export function Categorias() {
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
 
-  const popular = GAMES.filter((g) => g.popular);
-  const rest = GAMES.filter((g) => !g.popular);
+  const { data: games = [] } = useGames();
+  const popular = games.filter((g) => g.popular);
+  const rest = games.filter((g) => !g.popular);
   const visible = showAll ? rest : rest.slice(0, 4);
 
   return (
@@ -31,22 +31,23 @@ export function Categorias() {
       <div className="screen__body--pad screen__scroll">
         <p className="sectionlabel u-uppercase">Populares</p>
         <div className="catgrid">
-          {popular.map((g) => (
-            <button
-              key={g.id}
-              className="catcard catcard--lg"
-              onClick={() => navigate(`/juegos/${g.id}`)}
-            >
-              <Cover label={g.name} height={92} radius={14} />
-              <span className="catcard__name">{g.name}</span>
-              <span className="catcard__desc u-truncate">{g.description}</span>
-              {isEASportsPath(g.id) ? (
-                <Badge tone="primary">Ruta EA Sports</Badge>
-              ) : (
-                <Badge tone="neutral">Comunidad</Badge>
-              )}
-            </button>
-          ))}
+          {popular.map((g) => {
+            const isEA = g.id === "fifa26" || g.id === "efootball";
+            return (
+              <button
+                key={g.id}
+                className="catcard catcard--lg"
+                onClick={() => navigate(`/juegos/${g.id}`)}
+              >
+                <Cover label={g.name} height={92} radius={14} />
+                <span className="catcard__name">{g.name}</span>
+                <span className="catcard__desc u-truncate">{g.description}</span>
+                <Badge tone={isEA ? "primary" : "neutral"}>
+                  {isEA ? "Ruta EA Sports" : "Comunidad"}
+                </Badge>
+              </button>
+            );
+          })}
         </div>
 
         <p className="sectionlabel u-uppercase">Todos los juegos</p>
@@ -76,12 +77,15 @@ export function Categorias() {
 export function Categoria() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { tournaments, eloOf, userId } = useApp();
+  const { userId } = useApp();
 
-  const g = getGame(id as GameId);
-  const list = tournaments.filter((t) => t.gameId === id);
-  const myElo = eloOf(userId, id as GameId);
-  const publisher = publisherFor(id as GameId);
+  const { data: g } = useGame(id);
+  const { data: all = [] } = useTournaments();
+  const { data: myElo } = useElo(userId, id);
+  const { data: orgs = [] } = useOrganizers();
+
+  const list = all.filter((t) => t.gameId === id);
+  const publisher = orgs.find((o) => o.kind === "editorial" && o.games.includes(id));
 
   if (!g) {
     return (
@@ -110,8 +114,8 @@ export function Categoria() {
           <div className="phase">
             <Icon name="medal" size={16} />
             <span className="u-uppercase">{publisher.name}</span>
-            <Badge tone={publisher.tier === "editorial" ? "primary" : "warning"}>
-              {publisher.tier === "editorial" ? "Editorial" : "Comunidad"}
+            <Badge tone={publisher.kind === "editorial" ? "primary" : "warning"}>
+              {publisher.kind === "editorial" ? "Editorial" : "Comunidad"}
             </Badge>
           </div>
         )}
@@ -124,7 +128,7 @@ export function Categoria() {
           <div className="elochip__body">
             <span className="elochip__game">Tu ELO en {g.short}</span>
             <span className="elochip__value">
-              {myElo.rating} · {eloTier(myElo.rating).label} · {myElo.played} PJ
+              {myElo?.rating ?? 0} · {eloTier(myElo?.rating ?? 0).label} · {myElo?.played ?? 0} PJ
             </span>
           </div>
           <Icon name="chevronRight" size={18} className="u-tertiary" />

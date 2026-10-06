@@ -4,18 +4,20 @@ import { Avatar, Divider } from "../components/ui/Display";
 import { ListItem } from "../components/ui/List";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
+import { appVersion } from "../lib/api/app";
+import { useProfile, useSignOut, useUnreadCount } from "../lib/api/hooks";
 import { useApp } from "../store/AppContext";
-import { getPlayer } from "../data/players";
-import { appVersion } from "../data/app";
 import { useToast } from "../components/layout/Toast";
 import "../styles/screens.css";
 
 export function Menu() {
   const navigate = useNavigate();
-  const { userId, balance, unreadCount, signOut } = useApp();
+  const { userId, balance } = useApp();
   const toast = useToast();
 
-  const me = getPlayer(userId);
+  const { data: me } = useProfile(userId);
+  const { data: unread = 0 } = useUnreadCount();
+  const signOut = useSignOut();
   const mainGame = me?.mainGame.toUpperCase() ?? "GAMERT";
 
   return (
@@ -105,7 +107,7 @@ export function Menu() {
             label="Notificaciones"
             trailingIcon="chevronRight"
             onClick={() => navigate("/notificaciones")}
-            caption={unreadCount > 0 ? `${unreadCount} sin leer` : undefined}
+            caption={unread > 0 ? `${unread} sin leer` : undefined}
           />
           <ListItem
             leadingIcon="users"
@@ -138,7 +140,7 @@ export function Menu() {
           />
         </div>
 
-        <Button block variant="danger" iconLeft="logOut" onClick={signOut}>
+        <Button block variant="danger" iconLeft="logOut" onClick={() => signOut.mutate()}>
           Cerrar sesión
         </Button>
 

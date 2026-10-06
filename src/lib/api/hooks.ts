@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { signIn, signOut, signUp, type Session } from "./auth";
 import type { Game } from "../../data/games";
 import type { Player } from "../../data/players";
-import { eloOf, rankingFor } from "./elo";
+import { eloOf, eloPerGame, rankingFor } from "./elo";
+import { publisherFor, listOrganizers } from "./orgs";
 import { getGame, listGames } from "./games";
 import { getProfile, listPlayers, searchPlayers } from "./players";
 import { listMine, markAllRead, unreadCount } from "./notifications";
@@ -12,10 +13,13 @@ import { standingsOf } from "./standings";
 import { bracketOf } from "./matches";
 import { queryKeys } from "./queryKeys";
 import {
+  cancelTournament,
+  createTournament,
   getTournament,
   listMyTournaments,
   listOrganizedBy,
   listTournaments,
+  type CreateTournamentInput,
   type TournamentFilter,
 } from "./tournaments";
 
@@ -135,6 +139,26 @@ export function useIsJoined(
   });
 }
 
+export function useEloPerGame(playerId: string): Query<Awaited<ReturnType<typeof eloPerGame>>> {
+  return useQuery({
+    queryKey: ["eloPerGame", playerId],
+    queryFn: () => eloPerGame(playerId),
+    enabled: Boolean(playerId),
+  });
+}
+
+export function useOrganizers(): Query<Awaited<ReturnType<typeof listOrganizers>>> {
+  return useQuery({ queryKey: ["organizers"], queryFn: () => listOrganizers() });
+}
+
+export function usePublisherFor(gameId: string): Query<Awaited<ReturnType<typeof publisherFor>>> {
+  return useQuery({
+    queryKey: ["publisher", gameId],
+    queryFn: () => publisherFor(gameId),
+    enabled: Boolean(gameId),
+  });
+}
+
 export function useNotifications(): Query<Awaited<ReturnType<typeof listMine>>> {
   return useQuery({ queryKey: queryKeys.notifications(), queryFn: () => listMine() });
 }
@@ -237,3 +261,31 @@ export function useSignOut() {
 }
 
 export type { Session };
+
+export function useCreateTournament() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateTournamentInput) => createTournament(input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tournaments"] });
+      qc.invalidateQueries({ queryKey: ["myTournaments"] });
+      qc.invalidateQueries({ queryKey: ["organizedBy"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["unread"] });
+    },
+  });
+}
+
+export function useCancelTournament() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => cancelTournament(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tournaments"] });
+      qc.invalidateQueries({ queryKey: ["myTournaments"] });
+      qc.invalidateQueries({ queryKey: ["organizedBy"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["unread"] });
+    },
+  });
+}

@@ -1,26 +1,29 @@
 import { useNavigate } from "react-router-dom";
 import { AppBar, Screen } from "../components/layout/Layout";
 import { Icon } from "../components/ui/Icon";
-import { notificationsEmpty, type AppNotification } from "../data/app";
-import { useApp } from "../store/AppContext";
+import { useMarkAllRead, useNotifications, useUnreadCount } from "../lib/api/hooks";
+import { notificationsEmpty, type AppNotification } from "../lib/api/notifications";
 import { formatDate } from "../lib/utils";
 import "../styles/screens.css";
 
 export function Notificaciones() {
   const navigate = useNavigate();
-  const { notifications: items, unreadCount, markAllRead } = useApp();
+
+  const { data: items = [] } = useNotifications();
+  const { data: unread = 0 } = useUnreadCount();
+  const markAll = useMarkAllRead();
 
   return (
     <Screen padded={false} scroll={false}>
       <AppBar
         onBack={() => navigate(-1)}
         title="Notificaciones"
-        subtitle={unreadCount > 0 ? `${unreadCount} sin leer` : "Todo al día"}
+        subtitle={unread > 0 ? `${unread} sin leer` : "Todo al día"}
         actions={
-          unreadCount > 0 ? (
+          unread > 0 ? (
             <button
               className="appbar__action"
-              onClick={markAllRead}
+              onClick={() => markAll.mutate()}
               aria-label="Marcar todo como leído"
             >
               <Icon name="checkCircle" size={22} />

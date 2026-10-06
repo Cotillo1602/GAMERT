@@ -5,21 +5,38 @@ import { Avatar, SectionTitle, Divider, Badge } from "../components/ui/Display";
 import { ListItem } from "../components/ui/List";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
+import {
+  useEloPerGame,
+  useGames,
+  useMyTournaments,
+  useProfile,
+  useSignOut,
+} from "../lib/api/hooks";
 import { useApp } from "../store/AppContext";
-import { GAMES, isEASportsPath } from "../data/games";
-import { getPlayer } from "../data/players";
 import { useToast } from "../components/layout/Toast";
 import { eloTier } from "../lib/elo";
+import type { Game } from "../lib/api/games";
 import type { EloRecord } from "../lib/elo";
 import "../styles/screens.css";
 
 export function Perfil() {
   const navigate = useNavigate();
-  const { userId, balance, myTournaments, eloOf, signOut } = useApp();
+  const { userId, balance } = useApp();
   const toast = useToast();
 
-  const me = GAMES.map((g) => ({ g, elo: eloOf(userId, g.id) })).filter((x) => x.elo.played > 0);
-  const main = me.find((x) => x.g.id === getPlayer(userId)?.mainGame) ?? me[0];
+  const { data: player } = useProfile(userId);
+  const { data: games = [] } = useGames();
+  const { data: perGame = [] } = useEloPerGame(userId);
+  const { data: myTournaments = [] } = useMyTournaments(userId);
+  const signOut = useSignOut();
+
+  const gameOf = new Map<string, Game>(games.map((g) => [g.id, g]));
+  const me = perGame
+    .map((x) => ({ g: gameOf.get(x.gameId), elo: x.elo }))
+    .filter((x): x is { g: NonNullable<typeof x.g>; elo: EloRecord } =>
+      Boolean(x.g && x.elo.played > 0),
+    );
+  const main = me.find((x) => x.g.id === String(player?.mainGame ?? "")) ?? me[0];
   const mainTier = main ? eloTier(main.elo.rating) : null;
 
   const totalPlayed = me.reduce((s, x) => s + x.elo.played, 0);
@@ -29,8 +46,6 @@ export function Perfil() {
     (acc, x) => (!acc || x.elo.peak > acc.peak ? x.elo : acc),
     null,
   );
-
-  const player = getPlayer(userId);
 
   return (
     <Screen padded={false} scroll={false}>
@@ -120,6 +135,7 @@ export function Perfil() {
           <div className="stack">
             {me.map(({ g, elo }) => {
               const tier = eloTier(elo.rating);
+              const isEA = g.id === "fifa26" || g.id === "efootball";
               return (
                 <button key={g.id} className="eloline" onClick={() => navigate(`/ranking/${g.id}`)}>
                   <span className="eloline__icon" style={{ color: g.accent }}>
@@ -129,7 +145,7 @@ export function Perfil() {
                     <span className="eloline__game">{g.name}</span>
                     <span className="eloline__meta">
                       {elo.wins}V · {elo.losses}D · pico {elo.peak}
-                      {isEASportsPath(g.id) ? " · ruta EA Sports" : ""}
+                      {isEA ? " · ruta EA Sports" : ""}
                     </span>
                   </span>
                   <span className="eloline__rating">
@@ -193,7 +209,7 @@ export function Perfil() {
           </div>
         </section>
 
-        <Button block variant="danger" iconLeft="logOut" onClick={signOut}>
+        <Button block variant="danger" iconLeft="logOut" onClick={() => signOut.mutate()}>
           Cerrar sesión
         </Button>
       </div>

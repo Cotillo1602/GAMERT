@@ -1,12 +1,9 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppBar, FilterRow, Screen } from "../components/layout/Layout";
-import { Cover, Badge, SectionTitle } from "../components/ui/Display";
-import { Avatar } from "../components/ui/Display";
+import { Cover, Badge, SectionTitle, Avatar } from "../components/ui/Display";
 import { Icon } from "../components/ui/Icon";
-import { publishers, communityOrganizers } from "../data/app";
-import { getGame, gameName } from "../data/games";
-import { getPlayer } from "../data/players";
+import { useGames, useOrganizedBy, useOrganizers, useTournaments } from "../lib/api/hooks";
 import { useApp } from "../store/AppContext";
 import "../styles/screens.css";
 
@@ -19,46 +16,29 @@ const FILTERS = ["TODOS", "EDITORIAL", "COMUNIDAD", "MIS TORNEOS"] as const;
  */
 export function Organizaciones() {
   const navigate = useNavigate();
-  const { tournaments, myOrganizedTournaments } = useApp();
+  const { userId } = useApp();
   const [filter, setFilter] = useState<string>(FILTERS[0]);
   const [following, setFollowing] = useState<string[]>([]);
 
+  const { data: all = [] } = useTournaments();
+  const { data: orgs } = useOrganizers();
+  const { data: myOrganized = [] } = useOrganizedBy(userId);
+  const { data: games = [] } = useGames();
+  const gameName = new Map<string, string>(games.map((g) => [g.id, g.name]));
+
   const list = useMemo(() => {
-    const editorial = publishers.map((p) => ({
-      id: p.id,
-      name: p.name,
-      games: p.gameIds,
-      followers: p.followers,
-      verified: p.verifiedPrizes,
-      kind: "editorial" as const,
-    }));
-
-    const comunidad = communityOrganizers
-      .map((id) => getPlayer(id))
-      .filter((p): p is NonNullable<typeof p> => !!p?.organizer)
-      .map((p) => ({
-        id: p.id,
-        name: p.name,
-        games: [] as string[],
-        followers: p.organizer!.followers,
-        verified: p.organizer!.verifiedPrizes,
-        kind: "comunidad" as const,
-        tier: p.organizer!.tier,
-      }));
-
-    const all = [...editorial, ...comunidad];
-
+    const allOrgs = orgs ?? [];
     switch (filter) {
       case "EDITORIAL":
-        return all.filter((o) => o.kind === "editorial");
+        return allOrgs.filter((o) => o.kind === "editorial");
       case "COMUNIDAD":
-        return all.filter((o) => o.kind === "comunidad");
+        return allOrgs.filter((o) => o.kind === "comunidad");
       case "MIS TORNEOS":
-        return all.filter((o) => myOrganizedTournaments.some((t) => t.organizerId === o.id));
+        return allOrgs.filter((o) => myOrganized.some((t) => t.organizerId === o.id));
       default:
-        return all;
+        return allOrgs;
     }
-  }, [filter, myOrganizedTournaments]);
+  }, [filter, orgs, myOrganized]);
 
   function toggle(id: string) {
     setFollowing((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -87,7 +67,7 @@ export function Organizaciones() {
 
         <div className="stack">
           {list.map((o) => {
-            const live = tournaments.filter(
+            const live = all.filter(
               (t) => t.organizerId === o.id && (t.status === "live" || t.status === "upcoming"),
             ).length;
             return (
@@ -111,7 +91,7 @@ export function Organizaciones() {
                   </div>
                   <span className="org__game">
                     {o.games.length > 0
-                      ? o.games.map((g) => gameName(g)).join(" · ")
+                      ? o.games.map((g) => gameName.get(g) ?? g).join(" · ")
                       : "Torneos propios"}
                   </span>
                   <span className="org__followers">
@@ -136,12 +116,12 @@ export function Organizaciones() {
 
         <SectionTitle>Torneos de la comunidad</SectionTitle>
         <div className="stack">
-          {tournaments
+          {all
             .filter((t) => t.status !== "finished")
             .slice(0, 3)
             .map((t) => (
               <button key={t.id} className="catrowcard" onClick={() => navigate(`/torneo/${t.id}`)}>
-                <Cover label={getGame(t.gameId)?.name ?? t.gameId} height={56} radius={10} />
+                <Cover label={gameName.get(t.gameId) ?? t.gameId} height={56} radius={10} />
                 <div className="catrowcard__body">
                   <span className="catrowcard__name">{t.name}</span>
                   <span className="catrowcard__desc">

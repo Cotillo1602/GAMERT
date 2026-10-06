@@ -3,11 +3,15 @@ import { AppBar, Screen } from "../components/layout/Layout";
 import { Button } from "../components/ui/Button";
 import { Avatar, Badge, SectionTitle, Divider } from "../components/ui/Display";
 import { Icon } from "../components/ui/Icon";
+import {
+  useCancelTournament,
+  useGames,
+  useOrganizedBy,
+  useOrganizers,
+  useProfile,
+} from "../lib/api/hooks";
+import { FORMAT_LABELS, todayISO } from "../lib/api/tournaments";
 import { useApp } from "../store/AppContext";
-import { CURRENT_USER_ID, getPlayer } from "../data/players";
-import { FORMAT_LABELS, todayISO } from "../data/tournaments";
-import { gameName } from "../data/games";
-import { publishers } from "../data/app";
 import { useToast } from "../components/layout/Toast";
 import "../styles/screens.css";
 import "../styles/organizer.css";
@@ -22,13 +26,18 @@ import "../styles/organizer.css";
 
 export function Organizar() {
   const navigate = useNavigate();
-  const { myOrganizedTournaments, cancelTournament } = useApp();
+  const { userId } = useApp();
   const toast = useToast();
 
-  const me = getPlayer(CURRENT_USER_ID);
-  const org = me?.organizer;
+  const { data: me } = useProfile(userId);
+  const { data: mine = [] } = useOrganizedBy(userId);
+  const { data: orgs } = useOrganizers();
+  const { data: games = [] } = useGames();
+  const cancel = useCancelTournament();
 
-  const mine = myOrganizedTournaments.filter((t) => t.organizerId === CURRENT_USER_ID);
+  const org = me?.organizer;
+  const gameName = new Map<string, string>(games.map((g) => [g.id, g.name]));
+
   const upcoming = mine.filter((t) => t.status !== "finished");
   const past = mine.filter((t) => t.status === "finished");
 
@@ -139,7 +148,7 @@ export function Organizar() {
                   <div className="orgtcard__body">
                     <span className="orgtcard__name">{t.name}</span>
                     <div className="orgtcard__meta">
-                      <span>{gameName(t.gameId)}</span>
+                      <span>{gameName.get(t.gameId) ?? t.gameId}</span>
                       <span>·</span>
                       <span>
                         {t.date === todayISO() ? "Hoy" : t.date} {t.time}
@@ -168,8 +177,10 @@ export function Organizar() {
                     className="orgtrow__cancel"
                     aria-label={`Cancelar ${t.name}`}
                     onClick={() => {
-                      cancelTournament(t.id);
-                      toast.info(`${t.name} quedó cancelado. La app avisó a los inscritos.`);
+                      cancel.mutate(t.id, {
+                        onSuccess: () =>
+                          toast.info(`${t.name} quedó cancelado. La app avisó a los inscritos.`),
+                      });
                     }}
                   >
                     <Icon name="trash" size={15} />
@@ -189,7 +200,7 @@ export function Organizar() {
                   <div className="orgtcard__body">
                     <span className="orgtcard__name">{t.name}</span>
                     <span className="orgtcard__meta">
-                      {gameName(t.gameId)} · {t.enrolled} participantes
+                      {gameName.get(t.gameId) ?? t.gameId} · {t.enrolled} participantes
                     </span>
                   </div>
                   <Badge tone="neutral">Finalizado</Badge>
@@ -206,24 +217,27 @@ export function Organizar() {
           por la plataforma.
         </p>
         <div className="stack">
-          {publishers.slice(0, 4).map((p) => (
-            <div key={p.id} className="org">
-              <Avatar name={p.name} size={48} />
-              <div className="org__body">
-                <div className="org__row">
-                  <span className="org__name">{p.name}</span>
-                  <span className="org__verified">
-                    <Icon name="checkCircle" size={14} />
+          {(orgs ?? [])
+            .filter((o) => o.kind === "editorial")
+            .slice(0, 4)
+            .map((p) => (
+              <div key={p.id} className="org">
+                <Avatar name={p.name} size={48} />
+                <div className="org__body">
+                  <div className="org__row">
+                    <span className="org__name">{p.name}</span>
+                    <span className="org__verified">
+                      <Icon name="checkCircle" size={14} />
+                    </span>
+                  </div>
+                  <span className="org__followers">
+                    <Icon name="users" size={12} />
+                    {p.followers.toLocaleString("es")} seguidores
                   </span>
                 </div>
-                <span className="org__followers">
-                  <Icon name="users" size={12} />
-                  {p.followers.toLocaleString("es")} seguidores
-                </span>
+                <Badge tone="success">Verificado</Badge>
               </div>
-              <Badge tone="success">Verificado</Badge>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </Screen>

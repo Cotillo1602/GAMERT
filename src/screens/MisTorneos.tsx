@@ -5,10 +5,9 @@ import { TabBar } from "../components/layout/TabBar";
 import { Cover, Badge, SectionTitle, Stat } from "../components/ui/Display";
 import { ListItem } from "../components/ui/List";
 import { Icon } from "../components/ui/Icon";
-import { useApp } from "../store/AppContext";
-import { getGame } from "../data/games";
-import { organizerName } from "../data/app";
+import { useAllPlayers, useGames, useMyTournaments } from "../lib/api/hooks";
 import { formatDate } from "../lib/utils";
+import { useApp } from "../store/AppContext";
 import { EmptyState } from "./Torneos";
 import "../styles/screens.css";
 
@@ -16,8 +15,13 @@ const FILTERS = ["Todos", "Próximos", "En curso", "Finalizados"] as const;
 
 export function MisTorneos() {
   const navigate = useNavigate();
-  const { myTournaments } = useApp();
+  const { userId } = useApp();
   const [filter, setFilter] = useState<string>("Todos");
+
+  const { data: myTournaments = [] } = useMyTournaments(userId);
+  const { data: games = [] } = useGames();
+  const { data: players = [] } = useAllPlayers();
+  const organizer = (playerId: string) => players.find((p) => p.id === playerId)?.name ?? "?";
 
   const mine = useMemo(() => {
     switch (filter) {
@@ -73,7 +77,7 @@ export function MisTorneos() {
             <SectionTitle>Torneos</SectionTitle>
             <div className="stack">
               {mine.map((t) => {
-                const g = getGame(t.gameId);
+                const g = games.find((x) => x.id === t.gameId);
                 return (
                   <button key={t.id} className="mine" onClick={() => navigate(`/torneo/${t.id}`)}>
                     <Cover label={g?.name ?? t.gameId} height={60} radius={10} />
@@ -87,7 +91,7 @@ export function MisTorneos() {
                       </span>
                       <span className="mine__org">
                         <Icon name="users" size={12} />
-                        {organizerName(t.organizerId)}
+                        {organizer(t.organizerId)}
                       </span>
                     </div>
                     <Icon name="chevronRight" size={18} className="mine__chev" />

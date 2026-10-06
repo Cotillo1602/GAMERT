@@ -1,6 +1,7 @@
 import { CURRENT_USER_ID, players } from "../../data/players";
 import type { EloRecord } from "../elo";
 import { eloRecord, loadState } from "./demo-store";
+import { listGames } from "./games";
 
 export interface RankingRow {
   playerId: string;
@@ -17,4 +18,15 @@ export async function rankingFor(gameId: string): Promise<RankingRow[]> {
 
 export async function eloOf(playerId: string, gameId: string): Promise<EloRecord> {
   return eloRecord(loadState(), playerId, gameId);
+}
+
+export interface EloPerGame {
+  gameId: string;
+  elo: EloRecord;
+}
+
+export async function eloPerGame(playerId: string): Promise<EloPerGame[]> {
+  const state = loadState();
+  const games = await listGames();
+  return games.map((g) => ({ gameId: g.id, elo: eloRecord(state, playerId, g.id) }));
 }

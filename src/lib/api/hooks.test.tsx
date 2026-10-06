@@ -4,8 +4,12 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { allTournaments } from "../../data/tournaments";
 import {
+  useCancelTournament,
+  useCreateTournament,
+  useEloPerGame,
   useJoinTournament,
   useMarkAllRead,
+  useOrganizedBy,
   useRanking,
   useTournament,
   useTournaments,
@@ -78,5 +82,72 @@ describe("hooks TanStack Query sobre la capa API", () => {
     await waitFor(() => expect(mark.result.current.isSuccess).toBe(true));
 
     await waitFor(() => expect(count.result.current.data).toBe(0));
+  });
+
+  it("useEloPerGame expone un EloRecord por juego para un jugador", async () => {
+    const { result } = renderHook(() => useEloPerGame("u1"), {
+      wrapper: wrapperFor(newClient()),
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    const me = result.current.data ?? [];
+    expect(me.length).toBeGreaterThan(0);
+    expect(me[0].gameId).toBeTypeOf("string");
+    expect(me[0].elo.rating).toBeTypeOf("number");
+  });
+
+  it("useCreateTournament publica y lo expone en la lista del organizador", async () => {
+    const qc = newClient();
+    const wrap = wrapperFor(qc);
+
+    const mine = renderHook(() => useOrganizedBy("u1"), { wrapper: wrap });
+    await waitFor(() => expect(mine.result.current.isSuccess).toBe(true));
+    const before = mine.result.current.data?.length ?? 0;
+
+    const create = renderHook(() => useCreateTournament(), { wrapper: wrap });
+    act(() =>
+      create.result.current.mutate({
+        name: "TEST CUP",
+        gameId: "minecraft",
+        format: "eliminacion",
+        modality: "Virtual",
+        date: "2099-01-01",
+        time: "20:00",
+        slots: 8,
+        prize: { amount: 0, currency: "USD", kind: "ninguno", split: [0, 0, 0] },
+        rules: {
+          minElo: 0,
+          maxParticipants: 8,
+          requireConfirmation: true,
+          disputeWindowMin: 24,
+          autoForfeitOnDisconnect: true,
+          bestOf: 3,
+          notes: "",
+        },
+      }),
+    );
+    await waitFor(() => expect(create.result.current.isSuccess).toBe(true));
+
+    await waitFor(() => expect(mine.result.current.data?.length).toBe(before + 1));
+    expect(mine.result.current.data?.[0].name).toBe("TEST CUP");
+  });
+
+  it("useCancelTournament finaliza el torneo y lo quita del cuadro", async () => {
+    const qc = newClient();
+    const wrap = wrapperFor(qc);
+
+    const mine = renderHook(() => useOrganizedBy("u1"), { wrapper: wrap });
+    await waitFor(() => expect(mine.result.current.isSuccess).toBe(true));
+    const organized = mine.result.current.data ?? [];
+    const target = organized[0];
+    expect(target).toBeDefined();
+
+    const cancel = renderHook(() => useCancelTournament(), { wrapper: wrap });
+    act(() => cancel.result.current.mutate(target.id));
+    await waitFor(() => expect(cancel.result.current.isSuccess).toBe(true));
+
+    await waitFor(() => {
+      const after = mine.result.current.data ?? [];
+      expect(after.find((t) => t.id === target.id)?.status).toBe("finished");
+    });
   });
 });

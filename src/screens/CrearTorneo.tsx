@@ -1,13 +1,19 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppBar, Screen } from "../components/layout/Layout";
 import { Button } from "../components/ui/Button";
 import { Input, Toggle } from "../components/ui/Input";
 import { Icon, type IconName } from "../components/ui/Icon";
 import { Chip } from "../components/ui/Display";
-import { GAMES, type GameId } from "../data/games";
-import { CURRENT_USER_ID, getPlayer } from "../data/players";
-import { FORMAT_LABELS, todayISO, type Format, type Prize, type Rules } from "../data/tournaments";
+import { useCreateTournament, useElo, useGames, useProfile } from "../lib/api/hooks";
+import type { GameId } from "../lib/api/games";
+import {
+  FORMAT_LABELS,
+  todayISO,
+  type Format,
+  type Prize,
+  type Rules,
+} from "../lib/api/tournaments";
 import { useApp } from "../store/AppContext";
 import { useToast } from "../components/layout/Toast";
 import { eloTier } from "../lib/elo";
@@ -23,10 +29,13 @@ const FORMATS: Format[] = ["eliminacion", "grupos", "suizo", "doble_eliminacion"
 
 export function CrearTorneo() {
   const navigate = useNavigate();
-  const { createTournament, eloOf } = useApp();
+  const { userId } = useApp();
   const toast = useToast();
 
-  const me = getPlayer(CURRENT_USER_ID);
+  const { data: me } = useProfile(userId);
+  const { data: games = [] } = useGames();
+  const create = useCreateTournament();
+
   const myOrganizer = me?.organizer;
   const verified = myOrganizer?.verifiedPrizes ?? false;
 
@@ -55,7 +64,8 @@ export function CrearTorneo() {
   const prizeTotal = Math.round((amount * split[0]) / 100);
   const cashBlocked = prizeKind === "efectivo" && amount > 0 && !verified;
 
-  const suggestedElo = useMemo(() => eloOf(CURRENT_USER_ID, gameId), [eloOf, gameId]);
+  const { data: suggestedElo } = useElo(userId, gameId);
+  const eloRating = suggestedElo?.rating ?? 0;
 
   function validateStep1(): string[] {
     const e: string[] = [];
@@ -73,9 +83,9 @@ export function CrearTorneo() {
     const sum = split[0] + split[1] + split[2];
     if (prizeKind !== "ninguno" && amount > 0 && sum !== 100)
       e.push(`El reparto debe sumar 100% (actual: ${sum}%).`);
-    if (minElo > suggestedElo.rating) {
+    if (minElo > eloRating) {
       e.push(
-        `Tu ELO en ${gameId.toUpperCase()} es ${suggestedElo.rating}; un mínimo de ${minElo} te dejaría sin jugadores elegibles.`,
+        `Tu ELO en ${gameId.toUpperCase()} es ${eloRating}; un mínimo de ${minElo} te dejaría sin jugadores elegibles.`,
       );
     }
     return e;
@@ -107,20 +117,15 @@ export function CrearTorneo() {
         ? { amount: 0, currency: "USD", kind: "ninguno", split: [0, 0, 0] }
         : { amount, currency: "USD", kind: prizeKind, split };
 
-    const id = createTournament({
-      name,
-      gameId,
-      format,
-      modality,
-      date,
-      time,
-      slots,
-      prize,
-      rules,
-    });
-
-    toast.success("Torneo publicado. La app gestiona el cuadro.");
-    navigate(`/torneo/${id}`);
+    create.mutate(
+      { name, gameId, format, modality, date, time, slots, prize, rules },
+      {
+        onSuccess: (id) => {
+          toast.success("Torneo publicado. La app gestiona el cuadro.");
+          navigate(`/torneo/${id}`);
+        },
+      },
+    );
   }
 
   return (
@@ -150,7 +155,7 @@ export function CrearTorneo() {
             <div className="field">
               <span className="field__label">Juego</span>
               <div className="gameselect">
-                {GAMES.map((g) => (
+                {games.map((g) => (
                   <button
                     key={g.id}
                     type="button"
@@ -295,9 +300,7 @@ export function CrearTorneo() {
               <div className="field">
                 <span className="field__label">
                   ELO mínimo ·{" "}
-                  <span style={{ color: "var(--c-secondary)" }}>
-                    tu ELO es {suggestedElo.rating}
-                  </span>
+                  <span style={{ color: "var(--c-secondary)" }}>tu ELO es {eloRating}</span>
                 </span>
                 <input
                   type="range"
@@ -309,7 +312,7 @@ export function CrearTorneo() {
                   className="slider"
                 />
                 <p className="field__msg">
-                  Tu nivel actual: <strong>{eloTier(suggestedElo.rating).label}</strong>
+                  Tu nivel actual: <strong>{eloTier(eloRating).label}</strong>
                 </p>
               </div>
 

@@ -1,6 +1,8 @@
 import { commitState, loadState, type Settings } from "./demo-store";
 import { isDemoMode } from "./utils";
 
+export type { Settings } from "./demo-store";
+
 export interface SettingsPatch {
   profile_private?: boolean;
   security_and_password?: boolean;

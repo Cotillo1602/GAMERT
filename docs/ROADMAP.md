@@ -51,19 +51,23 @@
 | Tarea                                                 | Notas                                                                                                                               |
 | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `src/lib/api/*` con fallback demo                     | ✅ ADR-02/03: `demo-store` compartido con `AppContext` (`gamert:state-changed`), mutaciones con validaciones de la RPC, `queryKeys` |
-| Hooks TanStack Query (`src/lib/api/hooks.ts`)         | ✅ lecturas + mutaciones con `invalidateQueries`; `src/lib/api/hooks.test.tsx` (64 tests en total)                                  |
+| Hooks TanStack Query (`src/lib/api/hooks.ts`)         | ✅ lecturas + mutaciones con `invalidateQueries`; `src/lib/api/hooks.test.tsx` (67 tests en total)                                  |
 | `Ranking` migrada a queries                           | ✅ sin imports de `src/data`; `elo` devuelve `EloRecord` y `rankingFor` → `{playerId, elo}[]`                                       |
 | `Clasificacion` migrada a queries                     | ✅ `useStandings` + `useRanking` por juego del torneo                                                                               |
 | `Home`, `Torneos`, `DetalleTorneo` sobre queries      | ✅ rutas principales; `useIsJoined` + invalidación `["isJoined"]`                                                                   |
+| `MisTorneos`, `Notificaciones` sobre queries         | ✅ `useMyTournaments`/`useNotifications`/`useUnreadCount`/`useMarkAllRead`; empty state re-exportado por API                          |
+| `Configuracion`, `Menu`, `Perfil` sobre queries      | ✅ `useSettings`/`useUpdateSetting`, `useProfile`, `useEloPerGame`, `useSignOut`                                                     |
+| `Categorias`, `Organizaciones`, `Organizar`, `CrearTorneo` sobre queries | ✅ `useOrganizers`/`usePublisherFor`, `useCreateTournament`, `useCancelTournament` (con commit a `demo-store` + notificación) |
+| Pantallas sin imports de `src/data`                   | ✅ grep sobre `src/screens` y `src/components` vacío (sólo `AppContext`/`lib/api` importan datos)                                    |
 | TanStack Query + `AuthProvider`                       | reemplaza persistencia de `AppContext`                                                                                              |
 | `Login`/`Registro` con Supabase Auth (email + Google) |                                                                                                                                     |
-| `Home`, `Torneos`, `DetalleTorneo` sobre queries      |                                                                                                                                     |
-| `Inscripcion` → RPC `join_tournament`                 | 🟡 `useJoinTournament` (validaciones en orden de la RPC); pantalla migrada                                                          |
+| `Inscripcion` → RPC `join_tournament`                 | 🟡 pantalla migrada (`useJoinTournament`); validaciones server-side pendientes                                                      |
 | `Cuadro`/`Resultado` → RPC + realtime                 | 🟡 lecturas en queries; reporte/confirmación/disputa siguen en `AppContext` (pendiente RPC demo)                                    |
 | `Ranking`/`Clasificacion` → `elo_ratings`             |                                                                                                                                     |
-| `CrearTorneo` → RPC `create_tournament` + Zod         |                                                                                                                                     |
-| `Notificaciones` → tabla + realtime                   |                                                                                                                                     |
-| `Configuracion` → `profiles.settings`                 |                                                                                                                                     |
+| `CrearTorneo` → RPC `create_tournament` + Zod         | 🟡 pantalla migrada (`useCreateTournament`); servidor pendiente                                                                     |
+| `Notificaciones` → tabla + realtime                   | 🟡 pantalla migrada (`useNotifications`); tabla/feed pendientes                                                                     |
+| `Configuracion` → `profiles.settings`                 | 🟡 pantalla migrada (`useUpdateSetting`); persistencia server pendiente                                                             |
+| Añadir el grep de CI como gate                         | `npm run build` sin imports de `src/data` fuera de `src/lib/api` en `src/screens`                                                    |
 | Limpieza: eliminar seeds no usados                    | sólo tras el cambio de cada pantalla                                                                                                |
 
 **Criterio de salida:** `npm run build` sin imports de `src/data` fuera de

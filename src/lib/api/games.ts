@@ -2,6 +2,8 @@ import { GAMES } from "../../data/games";
 import { isDemoMode } from "./utils";
 import type { Game } from "../../data/games";
 
+export type { Game, GameId } from "../../data/games";
+
 export async function listGames(): Promise<Game[]> {
   if (isDemoMode()) {
     return Promise.resolve([...GAMES]);

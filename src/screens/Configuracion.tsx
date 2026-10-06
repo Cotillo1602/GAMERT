@@ -4,15 +4,20 @@ import { Toggle } from "../components/ui/Input";
 import { ListItem } from "../components/ui/List";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
-import { appVersion } from "../data/app";
-import { useApp, type Settings } from "../store/AppContext";
+import { appVersion } from "../lib/api/app";
+import { useSettings, useUpdateSetting } from "../lib/api/hooks";
+import type { Settings } from "../lib/api/settings";
+import { useApp } from "../store/AppContext";
 import { useToast } from "../components/layout/Toast";
 import "../styles/screens.css";
 
 export function Configuracion() {
   const navigate = useNavigate();
-  const { settings, updateSetting, reset } = useApp();
+  const { reset } = useApp();
   const toast = useToast();
+
+  const { data: settings } = useSettings();
+  const update = useUpdateSetting();
 
   const toggles: {
     key: keyof Settings;
@@ -47,6 +52,11 @@ export function Configuracion() {
     },
   ];
 
+  function onChange(key: keyof Settings, value: boolean) {
+    const snake = key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`) as "sounds";
+    update.mutate({ [snake]: value });
+  }
+
   return (
     <Screen padded={false} scroll={false}>
       <AppBar onBack={() => navigate(-1)} title="Configuración" />
@@ -63,8 +73,8 @@ export function Configuracion() {
               <span className="setrow__caption">{t.caption}</span>
             </span>
             <Toggle
-              checked={settings[t.key]}
-              onChange={(v) => updateSetting(t.key, v)}
+              checked={settings?.[t.key] ?? false}
+              onChange={(v) => onChange(t.key, v)}
               label={t.label}
             />
           </div>

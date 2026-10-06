@@ -3,6 +3,7 @@ import { commitState, loadState } from "./demo-store";
 import { isDemoMode } from "./utils";
 
 export type { AppNotification };
+export { notificationsEmpty } from "../../data/app";
 
 export async function listMine(): Promise<AppNotification[]> {
   return loadState().notifications;
