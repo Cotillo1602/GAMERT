@@ -3,9 +3,9 @@ import { AppBar, Screen } from "../components/layout/Layout";
 import { SectionTitle, Divider, Badge } from "../components/ui/Display";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
-import { organizerName } from "../data/app";
-import { rulesText } from "../data/tournaments";
 import { formatDate, money } from "../lib/utils";
+import { useAllPlayers, useIsJoined, useTournament } from "../lib/api/hooks";
+import { rulesText } from "../lib/api/tournaments";
 import { useApp } from "../store/AppContext";
 import "../styles/screens.css";
 
@@ -13,11 +13,14 @@ import "../styles/screens.css";
 export function Confirmacion() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { tournamentById, isJoined } = useApp();
+  const { userId } = useApp();
 
-  const t = tournamentById(id);
+  const { data: t, isLoading } = useTournament(id);
+  const { data: players = [] } = useAllPlayers();
+  const organizer = (playerId: string) => players.find((p) => p.id === playerId)?.name ?? "?";
+  const { data: joined = false } = useIsJoined(id, userId);
 
-  if (!t) {
+  if (t === undefined) {
     return (
       <Screen padded={false} scroll={false}>
         <AppBar onBack={() => navigate(-1)} title="Confirmación" />
@@ -26,12 +29,16 @@ export function Confirmacion() {
             <span className="empty__icon">
               <Icon name="alertTriangle" size={26} />
             </span>
-            <p className="empty__text">No encontramos este torneo.</p>
+            <p className="empty__text">
+              {isLoading ? "Cargando torneo..." : "No encontramos este torneo."}
+            </p>
           </div>
         </div>
       </Screen>
     );
   }
+
+  const torneo = t;
 
   return (
     <Screen padded={false} scroll={false}>
@@ -42,9 +49,9 @@ export function Confirmacion() {
           <Icon name="checkCircle" size={30} />
           <h1 className="donecard__title">¡Estás dentro!</h1>
           <p className="donecard__text">
-            {isJoined(t.id)
-              ? `Te sembramos por ELO cuando arranque ${t.name}.`
-              : `Tu inscripción a ${t.name} ya no está activa.`}
+            {joined
+              ? `Te sembramos por ELO cuando arranque ${torneo.name}.`
+              : `Tu inscripción a ${torneo.name} ya no está activa.`}
           </p>
         </div>
 
@@ -60,7 +67,7 @@ export function Confirmacion() {
           <Step
             n={4}
             title="Premio"
-            text={`Reparto ${t.prize.split[0]}/${t.prize.split[1]}/${t.prize.split[2]} al podio.`}
+            text={`Reparto ${torneo.prize.split[0]}/${torneo.prize.split[1]}/${torneo.prize.split[2]} al podio.`}
           />
         </div>
 
@@ -74,14 +81,14 @@ export function Confirmacion() {
                 <Icon name="trophy" size={16} />
               </span>
               <span className="inforow__label">Torneo</span>
-              <span className="inforow__value">{t.name}</span>
+              <span className="inforow__value">{torneo.name}</span>
             </div>
             <div className="inforow">
               <span className="inforow__icon">
                 <Icon name="users" size={16} />
               </span>
               <span className="inforow__label">Organiza</span>
-              <span className="inforow__value">{organizerName(t.organizerId)}</span>
+              <span className="inforow__value">{organizer(torneo.organizerId)}</span>
             </div>
             <div className="inforow">
               <span className="inforow__icon">
@@ -89,7 +96,7 @@ export function Confirmacion() {
               </span>
               <span className="inforow__label">Comienza</span>
               <span className="inforow__value">
-                {formatDate(t.date)} · {t.time} {t.timezone}
+                {formatDate(torneo.date)} · {torneo.time} {torneo.timezone}
               </span>
             </div>
             <div className="inforow">
@@ -98,7 +105,7 @@ export function Confirmacion() {
               </span>
               <span className="inforow__label">Premio</span>
               <span className="inforow__value">
-                {t.prize.amount > 0 ? money(t.prize.amount) : "Sin premio"}
+                {torneo.prize.amount > 0 ? money(torneo.prize.amount) : "Sin premio"}
               </span>
             </div>
           </div>
@@ -106,7 +113,7 @@ export function Confirmacion() {
 
         <section>
           <SectionTitle>Reglas</SectionTitle>
-          <p className="rules">{rulesText(t)}</p>
+          <p className="rules">{rulesText(torneo)}</p>
         </section>
 
         <Badge tone="primary" icon="bell">
@@ -118,7 +125,11 @@ export function Confirmacion() {
         <Button size="md" variant="surface" onClick={() => navigate("/torneos")}>
           Explorar más
         </Button>
-        <Button size="md" onClick={() => navigate(`/torneo/${t.id}/cuadro`)} iconRight="arrowRight">
+        <Button
+          size="md"
+          onClick={() => navigate(`/torneo/${torneo.id}/cuadro`)}
+          iconRight="arrowRight"
+        >
           Ver cuadro
         </Button>
       </div>

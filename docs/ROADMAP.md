@@ -58,8 +58,8 @@
 | TanStack Query + `AuthProvider`                       | reemplaza persistencia de `AppContext`                                                                                              |
 | `Login`/`Registro` con Supabase Auth (email + Google) |                                                                                                                                     |
 | `Home`, `Torneos`, `DetalleTorneo` sobre queries      |                                                                                                                                     |
-| `Inscripcion` → RPC `join_tournament`                 | mensajes de error del §5 de API.md                                                                                                  |
-| `Cuadro`/`Resultado` → RPC + realtime                 |                                                                                                                                     |
+| `Inscripcion` → RPC `join_tournament`                 | 🟡 `useJoinTournament` (validaciones en orden de la RPC); pantalla migrada                                                          |
+| `Cuadro`/`Resultado` → RPC + realtime                 | 🟡 lecturas en queries; reporte/confirmación/disputa siguen en `AppContext` (pendiente RPC demo)                                    |
 | `Ranking`/`Clasificacion` → `elo_ratings`             |                                                                                                                                     |
 | `CrearTorneo` → RPC `create_tournament` + Zod         |                                                                                                                                     |
 | `Notificaciones` → tabla + realtime                   |                                                                                                                                     |

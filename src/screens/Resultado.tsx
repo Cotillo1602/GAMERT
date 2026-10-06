@@ -4,10 +4,9 @@ import { AppBar, Screen } from "../components/layout/Layout";
 import { Avatar, SectionTitle, Divider, Badge } from "../components/ui/Display";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
-import { getPlayer } from "../data/players";
-import { getGame } from "../data/games";
-import { eloTier } from "../lib/elo";
+import { eloTier, emptyElo } from "../lib/elo";
 import type { EloRecord } from "../lib/elo";
+import { useAllPlayers, useBracket, useElo, useGame, useTournament } from "../lib/api/hooks";
 import { useApp } from "../store/AppContext";
 import { useToast } from "../components/layout/Toast";
 import "../styles/screens.css";
@@ -20,11 +19,15 @@ export function Resultado() {
   const { id = "", matchId = "" } = useParams();
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { tournamentById, brackets, reportResult, disputeResult, eloOf, userId } = useApp();
+  const { userId, reportResult, disputeResult } = useApp();
   const toast = useToast();
 
-  const t = tournamentById(id);
-  const match = brackets[id]?.find((m) => m.id === matchId);
+  const { data: t, isLoading } = useTournament(id);
+  const { data: matches = [] } = useBracket(id);
+  const { data: players = [] } = useAllPlayers();
+  const nameOf = (playerId: string) => players.find((p) => p.id === playerId)?.name ?? "?";
+  const { data: game } = useGame(t?.gameId ?? "");
+  const { data: myElo } = useElo(userId, t?.gameId ?? "");
 
   const [mine, setMine] = useState<"a" | "b" | null>(null);
   const [scoreA, setScoreA] = useState(0);
@@ -34,7 +37,9 @@ export function Resultado() {
     params.get("disputa") === "1" ? "dispute" : "report",
   );
 
-  if (!t || !match) {
+  const match = matches.find((m) => m.id === matchId);
+
+  if (t === undefined || match === undefined) {
     return (
       <Screen padded={false} scroll={false}>
         <AppBar onBack={() => navigate(-1)} title="Resultado" />
@@ -43,19 +48,21 @@ export function Resultado() {
             <span className="empty__icon">
               <Icon name="alertTriangle" size={26} />
             </span>
-            <p className="empty__text">No encontramos esta partida.</p>
+            <p className="empty__text">
+              {isLoading ? "Cargando partida..." : "No encontramos esta partida."}
+            </p>
           </div>
         </div>
       </Screen>
     );
   }
 
-  const g = getGame(t.gameId);
+  const torneo = t;
   const iAmA = match.a === userId;
   const iAmB = match.b === userId;
   const amParticipant = iAmA || iAmB;
 
-  const bestOf = t.rules.bestOf;
+  const bestOf = torneo.rules.bestOf;
   const need = Math.floor(bestOf / 2) + 1;
   const aWins = scoreA >= need;
   const bWins = scoreB >= need;
@@ -93,7 +100,7 @@ export function Resultado() {
     if (!validScore) return toast.warning(`En un Bo${bestOf} se gana con ${need} tantos`);
     reportResult({ matchId, scoreA, scoreB, reportedBy: userId });
     toast.success("Resultado enviado. Tu rival tiene que confirmarlo");
-    navigate(`/torneo/${t!.id}/cuadro`);
+    navigate(`/torneo/${torneo.id}/cuadro`);
   }
 
   function onDispute() {
@@ -101,28 +108,28 @@ export function Resultado() {
       return toast.warning("Contanos el motivo (mínimo 10 caracteres)");
     disputeResult(matchId, reason.trim());
     toast.success("Impugnación enviada");
-    navigate(`/torneo/${t!.id}/cuadro`);
+    navigate(`/torneo/${torneo.id}/cuadro`);
   }
 
-  const myElo = eloOf(userId, t.gameId);
+  const elo = myElo ?? emptyElo();
 
   return (
     <Screen padded={false} scroll={false}>
-      <AppBar onBack={() => navigate(-1)} title="Resultado" subtitle={t.name} />
+      <AppBar onBack={() => navigate(-1)} title="Resultado" subtitle={torneo.name} />
 
       <div className="screen__body--pad screen__scroll">
         <div className="matchhead">
           <span className="matchhead__round">{match.roundLabel}</span>
           <span className="matchhead__game">
-            <Icon name={g?.icon ?? "gamepad"} size={13} />
-            {g?.name ?? t.gameId} · Bo{bestOf}
+            <Icon name={game?.icon ?? "gamepad"} size={13} />
+            {game?.name ?? torneo.gameId} · Bo{bestOf}
           </span>
         </div>
 
         <div className="versus">
-          <Player name={getPlayer(match.a ?? "")?.name ?? "Por definir"} me={iAmA} score={scoreA} />
+          <Player name={match.a ? nameOf(match.a) : "Por definir"} me={iAmA} score={scoreA} />
           <span className="versus__x">VS</span>
-          <Player name={getPlayer(match.b ?? "")?.name ?? "Por definir"} me={iAmB} score={scoreB} />
+          <Player name={match.b ? nameOf(match.b) : "Por definir"} me={iAmB} score={scoreB} />
         </div>
 
         {!amParticipant ? (
@@ -156,16 +163,16 @@ export function Resultado() {
                   disabled={!iAmA && !iAmB}
                   onClick={() => pickWinner("a")}
                 >
-                  <Avatar name={getPlayer(match.a ?? "")?.name ?? "?"} size={44} />
-                  <span>{getPlayer(match.a ?? "")?.name ?? "Por definir"}</span>
+                  <Avatar name={match.a ? nameOf(match.a) : "?"} size={44} />
+                  <span>{match.a ? nameOf(match.a) : "Por definir"}</span>
                 </button>
                 <button
                   className={mine === "b" ? "winnerpick__btn is-on" : "winnerpick__btn"}
                   disabled={!iAmA && !iAmB}
                   onClick={() => pickWinner("b")}
                 >
-                  <Avatar name={getPlayer(match.b ?? "")?.name ?? "?"} size={44} />
-                  <span>{getPlayer(match.b ?? "")?.name ?? "Por definir"}</span>
+                  <Avatar name={match.b ? nameOf(match.b) : "?"} size={44} />
+                  <span>{match.b ? nameOf(match.b) : "Por definir"}</span>
                 </button>
               </div>
             </section>
@@ -174,29 +181,29 @@ export function Resultado() {
               <SectionTitle>Marcador</SectionTitle>
               <div className="scorer">
                 <Stepper
-                  label={getPlayer(match.a ?? "")?.name ?? "A"}
+                  label={match.a ? nameOf(match.a) : "A"}
                   value={scoreA}
                   onChange={(v) => setScore("a", Math.min(v, bestOf))}
                 />
                 <span className="scorer__x">–</span>
                 <Stepper
-                  label={getPlayer(match.b ?? "")?.name ?? "B"}
+                  label={match.b ? nameOf(match.b) : "B"}
                   value={scoreB}
                   onChange={(v) => setScore("b", Math.min(v, bestOf))}
                 />
               </div>
               <p className="rules rules--soft">
                 Al mejor de {bestOf}: se gana con {need} tantos. El ELO del juego{" "}
-                {g?.short ?? t.gameId} se actualiza al confirmar.
+                {game?.short ?? torneo.gameId} se actualiza al confirmar.
               </p>
             </section>
 
             <Divider />
 
             <EloPreview
-              elo={myElo}
+              elo={elo}
               delta={mine === null ? null : eloDeltaPreview(scoreA, scoreB, mine)}
-              tier={eloTier(myElo.rating).label}
+              tier={eloTier(elo.rating).label}
             />
 
             <Button
@@ -223,8 +230,8 @@ export function Resultado() {
                 placeholder="Describí qué pasó en la partida…"
               />
               <p className="rules rules--soft">
-                La app da {t.rules.disputeWindowMin} minutos para impugnar. Si nadie responde, el
-                resultado se confirma automáticamente.
+                La app da {torneo.rules.disputeWindowMin} minutos para impugnar. Si nadie responde,
+                el resultado se confirma automáticamente.
               </p>
             </section>
 
@@ -237,7 +244,7 @@ export function Resultado() {
                 block
                 size="md"
                 variant="surface"
-                onClick={() => navigate(`/torneo/${t!.id}/cuadro`)}
+                onClick={() => navigate(`/torneo/${torneo.id}/cuadro`)}
               >
                 Volver al cuadro
               </Button>

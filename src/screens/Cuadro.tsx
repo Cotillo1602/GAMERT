@@ -3,11 +3,9 @@ import { AppBar, Screen } from "../components/layout/Layout";
 import { Avatar, SectionTitle } from "../components/ui/Display";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
-import { getPlayer } from "../data/players";
-import { getGame, type GameId } from "../data/games";
-import { organizerName } from "../data/app";
 import { championOf } from "../lib/bracket";
 import type { Match } from "../lib/bracket";
+import { useAllPlayers, useBracket, useGame, useTournament } from "../lib/api/hooks";
 import { useApp } from "../store/AppContext";
 import { formatDate } from "../lib/utils";
 import "../styles/screens.css";
@@ -19,13 +17,15 @@ import "../styles/screens.css";
 export function Cuadro() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { tournamentById, bracketOf, userId, eloDeltaFor, confirmResult, resolveDispute } =
-    useApp();
+  const { userId, confirmResult, resolveDispute, eloDeltaFor } = useApp();
 
-  const t = tournamentById(id);
-  const matches = bracketOf(id);
+  const { data: t, isLoading } = useTournament(id);
+  const { data: matches = [] } = useBracket(id);
+  const { data: players = [] } = useAllPlayers();
+  const nameOf = (playerId: string) => players.find((p) => p.id === playerId)?.name ?? "?";
+  const { data: game } = useGame(t?.gameId ?? "");
 
-  if (!t) {
+  if (t === undefined) {
     return (
       <Screen padded={false} scroll={false}>
         <AppBar onBack={() => navigate(-1)} title="Cuadro" />
@@ -34,20 +34,22 @@ export function Cuadro() {
             <span className="empty__icon">
               <Icon name="alertTriangle" size={26} />
             </span>
-            <p className="empty__text">No encontramos este torneo.</p>
+            <p className="empty__text">
+              {isLoading ? "Cargando torneo..." : "No encontramos este torneo."}
+            </p>
           </div>
         </div>
       </Screen>
     );
   }
 
-  const g = getGame(t.gameId);
+  const torneo = t;
   const champion = championOf(matches);
   const rounds = groupByRound(matches);
 
   return (
     <Screen padded={false} scroll={false}>
-      <AppBar onBack={() => navigate(-1)} title="Cuadro" subtitle={t.name} />
+      <AppBar onBack={() => navigate(-1)} title="Cuadro" subtitle={torneo.name} />
 
       <div className="screen__body--pad screen__scroll bracket">
         <div className="managednote">
@@ -55,8 +57,8 @@ export function Cuadro() {
           <div>
             <strong>Cuadro generado por la app</strong>
             <p>
-              {organizerName(t.organizerId)} definió el formato; GAMERT sembró por ELO de{" "}
-              {g?.name ?? t.gameId} y actualiza solo los resultados.
+              {nameOf(torneo.organizerId)} definió el formato; GAMERT sembró por ELO de{" "}
+              {game?.name ?? torneo.gameId} y actualiza solo los resultados.
             </p>
           </div>
         </div>
@@ -65,8 +67,8 @@ export function Cuadro() {
           <div className="champbanner">
             <Icon name="trophy" size={22} />
             <div>
-              <strong>Campeón: {getPlayer(champion)?.name}</strong>
-              <span>Final confirmada · ELO de {t.gameId.toUpperCase()} actualizado</span>
+              <strong>Campeón: {nameOf(champion)}</strong>
+              <span>Final confirmada · ELO de {torneo.gameId.toUpperCase()} actualizado</span>
             </div>
           </div>
         )}
@@ -77,8 +79,8 @@ export function Cuadro() {
               <Icon name="clock" size={26} />
             </span>
             <p className="empty__text">
-              El cuadro se arma solo cuando llega la hora de inicio ({t.time} {t.timezone} del{" "}
-              {formatDate(t.date)}).
+              El cuadro se arma solo cuando llega la hora de inicio ({torneo.time} {torneo.timezone}{" "}
+              del {formatDate(torneo.date)}).
             </p>
           </div>
         ) : (
@@ -90,11 +92,12 @@ export function Cuadro() {
                   <MatchCard
                     key={m.id}
                     m={m}
-                    game={t.gameId}
+                    gameShort={game?.short ?? torneo.gameId}
+                    nameOf={nameOf}
                     me={userId}
-                    onReport={() => navigate(`/torneo/${t.id}/resultado/${m.id}`)}
+                    onReport={() => navigate(`/torneo/${torneo.id}/resultado/${m.id}`)}
                     onConfirm={() => confirmResult(m.id)}
-                    onDispute={() => navigate(`/torneo/${t.id}/resultado/${m.id}?disputa=1`)}
+                    onDispute={() => navigate(`/torneo/${torneo.id}/resultado/${m.id}?disputa=1`)}
                     delta={eloDeltaFor(m.id)}
                     onResolve={() => resolveDispute(m.id, m.a ?? "")}
                     onResolveB={() => resolveDispute(m.id, m.b ?? "")}
@@ -109,13 +112,13 @@ export function Cuadro() {
       <div className="actionbar">
         <div className="actionbar__info">
           <span className="actionbar__label">Formato</span>
-          <span className="actionbar__value">Al mejor de {t.rules.bestOf}</span>
+          <span className="actionbar__value">Al mejor de {torneo.rules.bestOf}</span>
         </div>
         <Button
           size="md"
           variant="surface"
           iconLeft="chart"
-          onClick={() => navigate(`/torneo/${t.id}/clasificacion`)}
+          onClick={() => navigate(`/torneo/${torneo.id}/clasificacion`)}
         >
           Clasificación
         </Button>
@@ -126,7 +129,8 @@ export function Cuadro() {
 
 function MatchCard({
   m,
-  game,
+  gameShort,
+  nameOf,
   me,
   onReport,
   onConfirm,
@@ -136,7 +140,8 @@ function MatchCard({
   delta,
 }: {
   m: Match;
-  game: GameId;
+  gameShort: string;
+  nameOf: (id: string) => string;
   me: string;
   onReport: () => void;
   onConfirm: () => void;
@@ -153,10 +158,9 @@ function MatchCard({
     confirmed: "Confirmado",
     disputed: "En disputa",
   };
-  const g = getGame(game);
 
-  const a = m.a ? getPlayer(m.a) : null;
-  const b = m.b ? getPlayer(m.b) : null;
+  const a = m.a ? nameOf(m.a) : null;
+  const b = m.b ? nameOf(m.b) : null;
   const bye = (m.a === null) !== (m.b === null);
   const winner =
     m.status === "confirmed" && m.scoreA !== null && m.scoreB !== null
@@ -180,9 +184,20 @@ function MatchCard({
         </span>
       </div>
 
-      <Side player={a} score={m.scoreA} isWinner={winner === m.a} isMe={m.a === me} bye={bye} />
-
-      <Side player={b} score={m.scoreB} isWinner={winner === m.b} isMe={m.b === me} bye={bye} />
+      <Side
+        name={a}
+        score={m.scoreA}
+        isWinner={m.a !== null && winner === m.a}
+        isMe={m.a === me}
+        bye={bye}
+      />
+      <Side
+        name={b}
+        score={m.scoreB}
+        isWinner={m.b !== null && winner === m.b}
+        isMe={m.b === me}
+        bye={bye}
+      />
 
       {bye && (
         <p className="matchcard__note">
@@ -193,7 +208,7 @@ function MatchCard({
       {delta && (
         <p className="matchcard__elo">
           <Icon name="chart" size={13} /> +{delta.winnerDelta} / {delta.loserDelta} ELO de{" "}
-          {g?.short ?? game}
+          {gameShort}
         </p>
       )}
 
@@ -215,7 +230,7 @@ function MatchCard({
                 disputa.
               </p>
               <Button size="sm" block variant="surface" onClick={onResolve} disabled={m.a === null}>
-                Gana {getPlayer(m.a ?? "")?.name ?? "A"}
+                Gana {a ?? "A"}
               </Button>
               <Button
                 size="sm"
@@ -224,7 +239,7 @@ function MatchCard({
                 onClick={onResolveB}
                 disabled={m.b === null}
               >
-                Gana {getPlayer(m.b ?? "")?.name ?? "B"}
+                Gana {b ?? "B"}
               </Button>
             </>
           ) : (
@@ -245,13 +260,13 @@ function MatchCard({
 }
 
 function Side({
-  player,
+  name,
   score,
   isWinner,
   isMe,
   bye,
 }: {
-  player: ReturnType<typeof getPlayer> | null;
+  name: string | null;
   score: number | null;
   isWinner: boolean;
   isMe: boolean;
@@ -259,9 +274,9 @@ function Side({
 }) {
   return (
     <div className={isWinner ? "matchside is-winner" : "matchside"}>
-      <Avatar name={player?.name ?? "?"} size={28} />
+      <Avatar name={name ?? "?"} size={28} />
       <span className="matchside__name">
-        {player?.name ?? (bye ? "Bye" : "Por definir")}
+        {name ?? (bye ? "Bye" : "Por definir")}
         {isMe && <span className="standrow__you">Tú</span>}
       </span>
       {score !== null && <span className="matchside__score">{score}</span>}
