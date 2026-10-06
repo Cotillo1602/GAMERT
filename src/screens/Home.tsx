@@ -4,32 +4,47 @@ import { TabBar } from "../components/layout/TabBar";
 import { Cover, Badge, SectionTitle, Avatar } from "../components/ui/Display";
 import { ListTile } from "../components/ui/List";
 import { Icon } from "../components/ui/Icon";
-import { useApp } from "../store/AppContext";
-import { GAMES, getGame } from "../data/games";
-import { getPlayer } from "../data/players";
-import { organizerName } from "../data/app";
+import {
+  useAllPlayers,
+  useBracket,
+  useElo,
+  useGames,
+  useProfile,
+  useTournaments,
+} from "../lib/api/hooks";
+import type { Tournament } from "../lib/api/tournaments";
 import { nextMatchFor } from "../lib/bracket";
 import { eloTier } from "../lib/elo";
 import { formatDate } from "../lib/utils";
-import type { Tournament } from "../data/tournaments";
+import { useApp } from "../store/AppContext";
 import "../styles/screens.css";
 
 export function Home() {
   const navigate = useNavigate();
-  const { userId, balance, tournaments, brackets, eloOf, todayTournaments } = useApp();
+  const { userId, balance } = useApp();
 
-  const me = getPlayer(userId);
+  const { data: me } = useProfile(userId);
+  const { data: tournaments = [] } = useTournaments();
+  const { data: games = [] } = useGames();
+  const { data: players = [] } = useAllPlayers();
+  const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? "?";
+
   const featured = tournaments.find((t) => t.featured && t.status !== "finished") ?? tournaments[0];
-
-  const myNext = featured ? nextMatchFor(brackets[featured.id] ?? [], userId) : undefined;
+  const { data: featuredBracket = [] } = useBracket(featured?.id ?? "");
+  const myNext = featured ? nextMatchFor(featuredBracket, userId) : undefined;
 
   const upcoming = tournaments
     .filter((t) => t.status !== "finished")
     .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
     .slice(0, 4);
 
-  const mainGame = me ? getGame(me.mainGame) : undefined;
-  const mainElo = me ? eloOf(userId, me.mainGame) : null;
+  const today = new Date().toISOString().slice(0, 10);
+  const todayTournaments = tournaments
+    .filter((t) => t.date === today)
+    .sort((a, b) => a.time.localeCompare(b.time));
+
+  const mainGame = me ? games.find((g) => g.id === me.mainGame) : undefined;
+  const { data: mainElo } = useElo(userId, me?.mainGame ?? "");
   const tier = mainElo ? eloTier(mainElo.rating) : null;
 
   return (
@@ -80,8 +95,7 @@ export function Home() {
                 </Badge>
               </div>
               <p className="feature__meta">
-                {organizerName(featured.organizerId)} · {featured.enrolled}/{featured.slots}{" "}
-                inscritos
+                {nameOf(featured.organizerId)} · {featured.enrolled}/{featured.slots} inscritos
               </p>
               {myNext ? (
                 <p className="feature__meta">
@@ -119,7 +133,7 @@ export function Home() {
             Juegos
           </SectionTitle>
           <div className="catrow">
-            {GAMES.slice(0, 5).map((g) => (
+            {games.slice(0, 5).map((g) => (
               <button key={g.id} className="catcard" onClick={() => navigate(`/juegos/${g.id}`)}>
                 <Cover label={g.name} height={62} radius={12} />
                 <span className="catcard__name">{g.name}</span>

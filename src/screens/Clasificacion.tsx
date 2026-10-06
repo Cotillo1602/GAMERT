@@ -3,10 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AppBar, FilterRow, Screen } from "../components/layout/Layout";
 import { Avatar, Badge, SectionTitle } from "../components/ui/Display";
 import { Icon } from "../components/ui/Icon";
-import { getGame } from "../data/games";
-import { getPlayer } from "../data/players";
-import { standingsOf } from "../lib/bracket";
 import { eloTier } from "../lib/elo";
+import { useAllPlayers, useGame, useRanking, useStandings, useTournament } from "../lib/api/hooks";
 import { useApp } from "../store/AppContext";
 import "../styles/screens.css";
 
@@ -19,19 +17,24 @@ const TABS = ["Clasificación", "Eliminación"] as const;
 export function Clasificacion() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { userId, tournamentById, bracketOf, eloOf } = useApp();
+  const { userId } = useApp();
   const [tab, setTab] = useState<string>(TABS[0]);
 
-  const t = tournamentById(id);
-  const bracket = bracketOf(id);
+  const { data: t } = useTournament(id);
   const gameId = t?.gameId ?? "fifa26";
-  const g = getGame(gameId);
+  const { data: game } = useGame(gameId);
+  const { data: players = [] } = useAllPlayers();
+  const nameOf = (playerId: string) => players.find((p) => p.id === playerId)?.name ?? "?";
+
+  const { data: standing = [] } = useStandings(id);
+  const { data: ratingByPlayer = [] } = useRanking(gameId);
+  const eloOf = (playerId: string) => ratingByPlayer.find((r) => r.playerId === playerId)?.elo;
 
   const rows = useMemo(() => {
-    const standing = standingsOf(bracket).sort((a, b) => b.wins - a.wins || b.points - a.points);
-    if (tab === TABS[0]) return standing;
-    return standing.filter((r) => r.wins > 0);
-  }, [bracket, tab]);
+    const ordered = [...standing].sort((a, b) => b.wins - a.wins || b.points - a.points);
+    if (tab === TABS[0]) return ordered;
+    return ordered.filter((r) => r.wins > 0);
+  }, [standing, tab]);
 
   return (
     <Screen padded={false} scroll={false}>
@@ -61,7 +64,7 @@ export function Clasificacion() {
             <div className="stack">
               {rows.map((r, i) => {
                 const mine = r.playerId === userId;
-                const elo = eloOf(r.playerId, gameId);
+                const elo = eloOf(r.playerId);
                 const qualified = tab === TABS[1] && r.wins > 0;
                 return (
                   <div
@@ -81,18 +84,18 @@ export function Clasificacion() {
                         i + 1
                       )}
                     </span>
-                    <Avatar name={getPlayer(r.playerId)?.name ?? "?"} size={36} />
+                    <Avatar name={nameOf(r.playerId)} size={36} />
                     <span className="standrow__body">
                       <span className="standrow__name">
-                        {getPlayer(r.playerId)?.name}
+                        {nameOf(r.playerId)}
                         {mine && <span className="standrow__you">Tú</span>}
                       </span>
                       <span className="standrow__team">
-                        {r.wins}V · {r.losses}D · {eloTier(elo.rating).label}
+                        {r.wins}V · {r.losses}D · {eloTier(elo?.rating ?? 0).label}
                       </span>
                     </span>
                     <span className="standrow__num">{r.played}</span>
-                    <span className="standrow__num standrow__elo">{elo.rating}</span>
+                    <span className="standrow__num standrow__elo">{elo?.rating ?? 0}</span>
                   </div>
                 );
               })}
@@ -107,7 +110,7 @@ export function Clasificacion() {
           <div className="inforow">
             <Icon name="gamepad" size={16} className="inforow__icon" />
             <span className="inforow__label">Juego</span>
-            <span className="inforow__value">{g?.name ?? gameId}</span>
+            <span className="inforow__value">{game?.name ?? gameId}</span>
           </div>
           <div className="inforow">
             <Icon name="users" size={16} className="inforow__icon" />

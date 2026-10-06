@@ -53,6 +53,8 @@
 | `src/lib/api/*` con fallback demo                     | ✅ ADR-02/03: `demo-store` compartido con `AppContext` (`gamert:state-changed`), mutaciones con validaciones de la RPC, `queryKeys` |
 | Hooks TanStack Query (`src/lib/api/hooks.ts`)         | ✅ lecturas + mutaciones con `invalidateQueries`; `src/lib/api/hooks.test.tsx` (64 tests en total)                                  |
 | `Ranking` migrada a queries                           | ✅ sin imports de `src/data`; `elo` devuelve `EloRecord` y `rankingFor` → `{playerId, elo}[]`                                       |
+| `Clasificacion` migrada a queries                     | ✅ `useStandings` + `useRanking` por juego del torneo                                                                               |
+| `Home`, `Torneos`, `DetalleTorneo` sobre queries      | ✅ rutas principales; `useIsJoined` + invalidación `["isJoined"]`                                                                   |
 | TanStack Query + `AuthProvider`                       | reemplaza persistencia de `AppContext`                                                                                              |
 | `Login`/`Registro` con Supabase Auth (email + Google) |                                                                                                                                     |
 | `Home`, `Torneos`, `DetalleTorneo` sobre queries      |                                                                                                                                     |

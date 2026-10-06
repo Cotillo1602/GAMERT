@@ -5,27 +5,28 @@ import { TabBar } from "../components/layout/TabBar";
 import { Cover, Badge, SectionTitle } from "../components/ui/Display";
 import { SearchBar } from "../components/ui/Input";
 import { Icon } from "../components/ui/Icon";
-import { useApp } from "../store/AppContext";
-import { getGame, GAMES } from "../data/games";
-import { organizerName } from "../data/app";
+import { useAllPlayers, useGames, useTournaments } from "../lib/api/hooks";
+import type { Tournament } from "../lib/api/tournaments";
 import { money, formatDate } from "../lib/utils";
-import type { Tournament } from "../data/tournaments";
 import "../styles/screens.css";
 
 const FILTERS = ["Todos", "Virtual", "Presencial", "En curso", "Próximos"] as const;
 
 export function Torneos() {
   const navigate = useNavigate();
-  const { tournaments } = useApp();
+  const { data: tournaments = [] } = useTournaments();
+  const { data: games = [] } = useGames();
+  const { data: players = [] } = useAllPlayers();
   const [filter, setFilter] = useState<string>("Todos");
   const [game, setGame] = useState<string>("Todos");
   const [query, setQuery] = useState("");
 
   const list = useMemo(() => {
+    const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? "?";
     const q = query.trim().toLowerCase();
     return tournaments
       .filter((t) => {
-        if (q && !`${t.name} ${t.gameId} ${organizerName(t.organizerId)}`.toLowerCase().includes(q))
+        if (q && !`${t.name} ${t.gameId} ${nameOf(t.organizerId)}`.toLowerCase().includes(q))
           return false;
         if (game !== "Todos" && t.gameId !== game) return false;
         switch (filter) {
@@ -42,7 +43,7 @@ export function Torneos() {
         }
       })
       .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
-  }, [tournaments, filter, game, query]);
+  }, [tournaments, players, filter, game, query]);
 
   const live = tournaments.filter((t) => t.status === "live");
 
@@ -53,7 +54,7 @@ export function Torneos() {
       <div className="torneos__filters">
         <SearchBar value={query} onChange={setQuery} placeholder="Buscar torneo o juego" />
         <div className="filterrow" role="tablist">
-          {(["Todos", ...GAMES.map((g) => g.short)] as const).map((s) => (
+          {(["Todos", ...games.map((g) => g.short)] as const).map((s) => (
             <button
               key={s}
               role="tab"
@@ -100,7 +101,10 @@ export function Torneos() {
 }
 
 export function TournamentCard({ t, onOpen }: { t: Tournament; onOpen: () => void }) {
-  const g = getGame(t.gameId);
+  const { data: games = [] } = useGames();
+  const { data: players = [] } = useAllPlayers();
+  const g = games.find((x) => x.id === t.gameId);
+  const organizer = players.find((p) => p.id === t.organizerId)?.name ?? "?";
 
   return (
     <button className="tcard" onClick={onOpen}>
@@ -114,7 +118,7 @@ export function TournamentCard({ t, onOpen }: { t: Tournament; onOpen: () => voi
 
       <div className="tcard__body">
         <h3 className="tcard__title">{t.name}</h3>
-        <p className="tcard__org">{organizerName(t.organizerId)}</p>
+        <p className="tcard__org">{organizer}</p>
 
         <div className="tcard__meta">
           <span>

@@ -6,7 +6,7 @@ import { eloOf, rankingFor } from "./elo";
 import { getGame, listGames } from "./games";
 import { getProfile, listPlayers, searchPlayers } from "./players";
 import { listMine, markAllRead, unreadCount } from "./notifications";
-import { joinTournament, leaveTournament, participants } from "./registrations";
+import { joinTournament, leaveTournament, isJoined, participants } from "./registrations";
 import { getSettings, updateSetting, type SettingsPatch } from "./settings";
 import { standingsOf } from "./standings";
 import { bracketOf } from "./matches";
@@ -124,6 +124,17 @@ export function useElo(playerId: string, gameId: string): Query<Awaited<ReturnTy
   });
 }
 
+export function useIsJoined(
+  tournamentId: string,
+  playerId: string,
+): Query<Awaited<ReturnType<typeof isJoined>>> {
+  return useQuery({
+    queryKey: ["isJoined", tournamentId, playerId],
+    queryFn: () => isJoined(tournamentId, playerId),
+    enabled: Boolean(tournamentId && playerId),
+  });
+}
+
 export function useNotifications(): Query<Awaited<ReturnType<typeof listMine>>> {
   return useQuery({ queryKey: queryKeys.notifications(), queryFn: () => listMine() });
 }
@@ -152,6 +163,7 @@ export function useJoinTournament() {
       qc.invalidateQueries({ queryKey: ["myTournaments"] });
       qc.invalidateQueries({ queryKey: queryKeys.tournament(tournamentId) });
       qc.invalidateQueries({ queryKey: queryKeys.participants(tournamentId) });
+      qc.invalidateQueries({ queryKey: ["isJoined"] });
     },
   });
 }
@@ -165,6 +177,7 @@ export function useLeaveTournament() {
       qc.invalidateQueries({ queryKey: ["myTournaments"] });
       qc.invalidateQueries({ queryKey: queryKeys.tournament(tournamentId) });
       qc.invalidateQueries({ queryKey: queryKeys.participants(tournamentId) });
+      qc.invalidateQueries({ queryKey: ["isJoined"] });
     },
   });
 }

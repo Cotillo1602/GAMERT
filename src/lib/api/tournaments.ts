@@ -2,6 +2,9 @@ import type { GameId } from "../../data/games";
 import type { Tournament } from "../../data/tournaments";
 import { loadState } from "./demo-store";
 
+export type { Tournament } from "../../data/tournaments";
+export { rulesText } from "../../data/tournaments";
+
 export interface TournamentFilter {
   gameId?: GameId;
   status?: Tournament["status"];
