@@ -33,14 +33,14 @@
 
 | Tarea                               | Notas                                                                                                                                                                                        |
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Proyecto Supabase + CLI local       | `supabase init` ✅ (`config.toml`); el stack local espera Docker                                                            |
+| Proyecto Supabase + CLI local       | `supabase init` ✅ (`config.toml`); el stack local espera Docker                                                                                                                             |
 | Migración `0001_init.sql`           | tablas de `docs/DATABASE.md`                                                                                                                                                                 |
 | RLS en todas las tablas             | política por tabla, sin anon escritura                                                                                                                                                       |
 | Triggers de integridad              | `enrolled`, fin de torneo                                                                                                                                                                    |
 | RPC del contrato `docs/API.md` §2   | `join_tournament`, `generate_bracket`, `report_result`, `confirm_result`, `dispute_result`, `resolve_dispute`, `forfeit_match`, `start_tournament`, `create_tournament`, `cancel_tournament` |
 | `seed.sql` desde `src/data`         | ids idénticos (ADR-10), `npm run seed:gen`                                                                                                                                                   |
 | Smoke tests de SQL                  | `npm run db:check`: migración + seed + ciclo inscripción→cuadro→ELO + RLS, sin Docker (PGlite)                                                                                               |
-| Tipos generados `database.types.ts` | `npm run types:gen`, regenerados y verificados en CI          |
+| Tipos generados `database.types.ts` | `npm run types:gen`, regenerados y verificados en CI                                                                                                                                         |
 
 **Criterio de salida:** con SQL local, un torneo completo se juega vía
 `psql` (inscribir → cuadro → resultados → ELO). Mientras no haya SQL local,
