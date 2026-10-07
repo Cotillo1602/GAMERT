@@ -15,7 +15,8 @@ import {
 } from "./demo-store";
 import { getSession, signIn, signOut } from "./auth";
 import { eloOf, rankingFor } from "./elo";
-import { bracketOf, nextMatchFor } from "./matches";
+import type { Tournament } from "./tournaments";
+import { bracketOf, confirmResult, nextMatchFor, reportResult, resolveDispute } from "./matches";
 import { listMine, markAllRead, unreadCount } from "./notifications";
 import { listPlayers, getProfile, searchPlayers } from "./players";
 import { isJoined, joinTournament, leaveTournament, participants } from "./registrations";
@@ -147,6 +148,94 @@ describe("matches", () => {
     expect(m).toBeDefined();
     expect(m?.a === "u1" || m?.b === "u1").toBe(true);
     expect(await nextMatchFor(matches, "nadie")).toBeUndefined();
+  });
+});
+
+describe("match lifecycle (RPC demo)", () => {
+  function seedLiveTournament(
+    bestOf: Tournament["rules"]["bestOf"] = 3,
+    requireConfirmation = true,
+  ): string {
+    const t: Tournament = {
+      id: "t-test",
+      name: "TEST CUP",
+      gameId: "fifa26",
+      organizerId: "u3",
+      publisherTier: "comunidad",
+      modality: "Virtual",
+      format: "eliminacion",
+      date: "2099-01-01",
+      time: "20:00",
+      timezone: "GMT-3",
+      enrolled: 2,
+      slots: 16,
+      prize: { amount: 0, currency: "USD", kind: "ninguno", split: [0, 0, 0] },
+      rules: {
+        minElo: 0,
+        maxParticipants: 16,
+        requireConfirmation,
+        disputeWindowMin: 24,
+        autoForfeitOnDisconnect: true,
+        bestOf,
+        notes: "",
+      },
+      status: "live",
+    };
+    commitState((s) => ({
+      ...s,
+      tournaments: [t, ...s.tournaments],
+      brackets: {
+        ...s.brackets,
+        "t-test": scheduleRounds("t-test", ["u1", "u2"], "2099-01-01T20:00:00"),
+      },
+    }));
+    return "t-test";
+  }
+
+  it("reportar → confirmación del rival → ELO y cierre del torneo", async () => {
+    seedLiveTournament();
+    const m = (await bracketOf("t-test"))[0];
+    expect(m.a).toBe("u1");
+    const before = (await eloOf("u1", "fifa26")).rating;
+
+    await reportResult({ matchId: m.id, scoreA: 2, scoreB: 0, reportedBy: "u1" });
+    expect((await bracketOf("t-test"))[0].status).toBe("reported");
+
+    await confirmResult(m.id);
+    const after = (await bracketOf("t-test"))[0];
+    expect(after.status).toBe("confirmed");
+    expect((await eloOf("u1", "fifa26")).rating).toBeGreaterThan(before);
+    expect((await getTournament("t-test"))?.status).toBe("finished");
+    expect((await listMine()).length).toBeGreaterThan(0);
+  });
+
+  it("reportar sin confirmación cierra la partida y mueve el ELO", async () => {
+    seedLiveTournament(3, false);
+    const m = (await bracketOf("t-test"))[0];
+    const before = (await eloOf("u2", "fifa26")).rating;
+    await reportResult({ matchId: m.id, scoreA: 0, scoreB: 2, reportedBy: "u2" });
+    expect((await bracketOf("t-test"))[0].status).toBe("confirmed");
+    expect((await eloOf("u2", "fifa26")).rating).toBeGreaterThan(before);
+  });
+
+  it("impugnación congela el ELO y resolver lo libera", async () => {
+    seedLiveTournament();
+    const m = (await bracketOf("t-test"))[0];
+    await reportResult({ matchId: m.id, scoreA: 2, scoreB: 0, reportedBy: "u1" });
+
+    const before = (await eloOf("u1", "fifa26")).rating;
+    await resolveDispute(m.id, "u1");
+    const after = (await bracketOf("t-test"))[0];
+    expect(after.status).toBe("confirmed");
+    expect(after.reportReason).toContain("resuelto a favor de");
+    expect((await eloOf("u1", "fifa26")).rating).toBeGreaterThan(before);
+  });
+
+  it("reporte de un jugador ajeno se ignora", async () => {
+    seedLiveTournament();
+    const m = (await bracketOf("t-test"))[0];
+    await reportResult({ matchId: m.id, scoreA: 5, scoreB: 0, reportedBy: "u99" });
+    expect((await bracketOf("t-test"))[0].status).toBe("ready");
   });
 });
 

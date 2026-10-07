@@ -6,7 +6,15 @@ import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
 import { eloTier, emptyElo } from "../lib/elo";
 import type { EloRecord } from "../lib/elo";
-import { useAllPlayers, useBracket, useElo, useGame, useTournament } from "../lib/api/hooks";
+import {
+  useAllPlayers,
+  useBracket,
+  useDisputeResult,
+  useElo,
+  useGame,
+  useReportResult,
+  useTournament,
+} from "../lib/api/hooks";
 import { useApp } from "../store/AppContext";
 import { useToast } from "../components/layout/Toast";
 import "../styles/screens.css";
@@ -19,8 +27,11 @@ export function Resultado() {
   const { id = "", matchId = "" } = useParams();
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { userId, reportResult, disputeResult } = useApp();
+  const { userId } = useApp();
   const toast = useToast();
+
+  const report = useReportResult();
+  const dispute = useDisputeResult();
 
   const { data: t, isLoading } = useTournament(id);
   const { data: matches = [] } = useBracket(id);
@@ -98,7 +109,7 @@ export function Resultado() {
   function onReport() {
     if (mine === null) return toast.warning("Indicá quién ganó la partida");
     if (!validScore) return toast.warning(`En un Bo${bestOf} se gana con ${need} tantos`);
-    reportResult({ matchId, scoreA, scoreB, reportedBy: userId });
+    report.mutate({ matchId, scoreA, scoreB, reportedBy: userId });
     toast.success("Resultado enviado. Tu rival tiene que confirmarlo");
     navigate(`/torneo/${torneo.id}/cuadro`);
   }
@@ -106,7 +117,7 @@ export function Resultado() {
   function onDispute() {
     if (reason.trim().length < 10)
       return toast.warning("Contanos el motivo (mínimo 10 caracteres)");
-    disputeResult(matchId, reason.trim());
+    dispute.mutate({ matchId, reason: reason.trim() });
     toast.success("Impugnación enviada");
     navigate(`/torneo/${torneo.id}/cuadro`);
   }

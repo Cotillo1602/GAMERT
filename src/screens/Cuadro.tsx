@@ -5,7 +5,15 @@ import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
 import { championOf } from "../lib/bracket";
 import type { Match } from "../lib/bracket";
-import { useAllPlayers, useBracket, useGame, useTournament } from "../lib/api/hooks";
+import {
+  useAllPlayers,
+  useBracket,
+  useConfirmResult,
+  useGame,
+  useResolveDispute,
+  useTournament,
+} from "../lib/api/hooks";
+import { eloDeltaFor } from "../lib/api/matches";
 import { useApp } from "../store/AppContext";
 import { formatDate } from "../lib/utils";
 import "../styles/screens.css";
@@ -17,7 +25,10 @@ import "../styles/screens.css";
 export function Cuadro() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { userId, confirmResult, resolveDispute, eloDeltaFor } = useApp();
+  const { userId } = useApp();
+
+  const confirm = useConfirmResult();
+  const resolveD = useResolveDispute();
 
   const { data: t, isLoading } = useTournament(id);
   const { data: matches = [] } = useBracket(id);
@@ -96,11 +107,11 @@ export function Cuadro() {
                     nameOf={nameOf}
                     me={userId}
                     onReport={() => navigate(`/torneo/${torneo.id}/resultado/${m.id}`)}
-                    onConfirm={() => confirmResult(m.id)}
+                    onConfirm={() => confirm.mutate(m.id)}
                     onDispute={() => navigate(`/torneo/${torneo.id}/resultado/${m.id}?disputa=1`)}
                     delta={eloDeltaFor(m.id)}
-                    onResolve={() => resolveDispute(m.id, m.a ?? "")}
-                    onResolveB={() => resolveDispute(m.id, m.b ?? "")}
+                    onResolve={() => resolveD.mutate({ matchId: m.id, winnerId: m.a ?? "" })}
+                    onResolveB={() => resolveD.mutate({ matchId: m.id, winnerId: m.b ?? "" })}
                   />
                 ))}
               </div>

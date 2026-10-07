@@ -10,7 +10,14 @@ import { listMine, markAllRead, unreadCount } from "./notifications";
 import { joinTournament, leaveTournament, isJoined, participants } from "./registrations";
 import { getSettings, updateSetting, type SettingsPatch } from "./settings";
 import { standingsOf } from "./standings";
-import { bracketOf } from "./matches";
+import {
+  bracketOf,
+  confirmResult,
+  disputeResult,
+  reportResult,
+  resolveDispute,
+  type ReportResultInput,
+} from "./matches";
 import { queryKeys } from "./queryKeys";
 import {
   cancelTournament,
@@ -287,5 +294,58 @@ export function useCancelTournament() {
       qc.invalidateQueries({ queryKey: ["notifications"] });
       qc.invalidateQueries({ queryKey: ["unread"] });
     },
+  });
+}
+
+function invalidateMatchQueries(
+  qc: ReturnType<typeof useQueryClient>,
+  tournamentId: string,
+  movedElo = false,
+) {
+  qc.invalidateQueries({ queryKey: queryKeys.bracket(tournamentId) });
+  qc.invalidateQueries({ queryKey: queryKeys.standings(tournamentId) });
+  qc.invalidateQueries({ queryKey: queryKeys.tournament(tournamentId) });
+  qc.invalidateQueries({ queryKey: ["tournaments"] });
+  qc.invalidateQueries({ queryKey: ["myTournaments"] });
+  qc.invalidateQueries({ queryKey: ["notifications"] });
+  qc.invalidateQueries({ queryKey: ["unread"] });
+  if (movedElo) {
+    qc.invalidateQueries({ queryKey: ["ranking"] });
+    qc.invalidateQueries({ queryKey: ["elo"] });
+    qc.invalidateQueries({ queryKey: ["eloPerGame"] });
+  }
+}
+
+export function useReportResult() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: ReportResultInput) => reportResult(input),
+    onSuccess: (_res, input) => invalidateMatchQueries(qc, input.matchId.split(":m")[0], true),
+  });
+}
+
+export function useConfirmResult() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (matchId: string) => confirmResult(matchId),
+    onSuccess: (_res, matchId) => invalidateMatchQueries(qc, matchId.split(":m")[0], true),
+  });
+}
+
+export function useDisputeResult() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ matchId, reason }: { matchId: string; reason: string }) =>
+      disputeResult(matchId, reason),
+    onSuccess: (_res, { matchId }) => invalidateMatchQueries(qc, matchId.split(":m")[0]),
+  });
+}
+
+export function useResolveDispute() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ matchId, winnerId }: { matchId: string; winnerId: string }) =>
+      resolveDispute(matchId, winnerId),
+    onSuccess: (_res, { matchId }) => invalidateMatchQueries(qc, matchId.split(":m")[0], true),
   });
 }
