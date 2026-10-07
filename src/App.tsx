@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, Navigate, Outlet, RouterProvider } from "react-router-dom";
-import { AppProvider } from "./store/AppContext";
 import { StateSync } from "./lib/api/StateSync";
 import { Phone } from "./components/layout/Layout";
 import { ToastProvider } from "./components/layout/Toast";
@@ -26,11 +25,9 @@ const router = createBrowserRouter([
     element: (
       <>
         <StateSync />
-        <AppProvider>
-          <ToastProvider>
-            <Shell />
-          </ToastProvider>
-        </AppProvider>
+        <ToastProvider>
+          <Shell />
+        </ToastProvider>
       </>
     ),
     children: [{ index: true, element: <Navigate to="/home" replace /> }, ...routes],

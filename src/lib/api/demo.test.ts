@@ -23,6 +23,7 @@ import { isJoined, joinTournament, leaveTournament, participants } from "./regis
 import { getSettings, updateSetting } from "./settings";
 import { standingsOf } from "./standings";
 import { getTournament, listMyTournaments, listOrganizedBy, listTournaments } from "./tournaments";
+import { autoStartDue } from "./scheduler";
 
 beforeEach(() => {
   window.localStorage.clear();
@@ -350,5 +351,65 @@ describe("auth", () => {
     await signOut();
     expect(await getSession()).toBeNull();
     expect(loadState().authenticated).toBe(false);
+  });
+});
+
+describe("auto-start de torneos (scheduler)", () => {
+  function seedUpcoming(id: string, date: string): void {
+    commitState((s) => {
+      const t: Tournament = {
+        id,
+        name: "START CUP",
+        gameId: "fifa26",
+        organizerId: "u3",
+        publisherTier: "comunidad",
+        modality: "Virtual",
+        format: "eliminacion",
+        date,
+        time: "09:00",
+        timezone: "GMT-3",
+        enrolled: 2,
+        slots: 8,
+        prize: { amount: 0, currency: "USD", kind: "ninguno", split: [0, 0, 0] },
+        rules: {
+          minElo: 0,
+          maxParticipants: 8,
+          requireConfirmation: true,
+          disputeWindowMin: 24,
+          autoForfeitOnDisconnect: true,
+          bestOf: 3,
+          notes: "",
+        },
+        status: "upcoming",
+      };
+      return {
+        ...s,
+        authenticated: true,
+        tournaments: [t, ...s.tournaments],
+        registrations: { ...s.registrations, [CURRENT_USER_ID]: [id] },
+      };
+    });
+  }
+
+  it("siembra y publica el cuadro del torneo vencido en el que estoy", () => {
+    seedUpcoming("t-start", "2020-01-01");
+    autoStartDue();
+    const s = loadState();
+    expect(s.tournaments.find((t) => t.id === "t-start")?.status).toBe("live");
+    expect(s.brackets["t-start"]).toHaveLength(7);
+    expect(s.tournaments.find((t) => t.id === "t-start")?.phase).toBeDefined();
+  });
+
+  it("no arranca torneos futuros ni con sesión desautenticada", () => {
+    seedUpcoming("t-futuro", "2099-01-01");
+    commitState((s) => ({ ...s, authenticated: false }));
+
+    const before = loadState().tournaments.find((t) => t.id === "t-futuro");
+    expect(before?.status).toBe("upcoming");
+
+    autoStartDue();
+    const s = loadState();
+    expect(s.tournaments.find((t) => t.id === "t-futuro")?.status).toBe("upcoming");
+    expect(s.brackets["t-futuro"]).toBeUndefined();
   });
 });

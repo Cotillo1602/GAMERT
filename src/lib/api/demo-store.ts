@@ -12,11 +12,10 @@ import { allTournaments, type Tournament } from "../../data/tournaments";
 /* ============================================================
    Store demo: fuente única de verdad del estado local.
 
-   La capa API (src/lib/api/*) y el AppContext comparten el mismo
-   snapshot en localStorage. Quien escribe con `commitState` publica
-   un evento `gamert:state-changed` para que el AppContext se
-   rehidrate; el AppContext persiste con `saveState` (sin evento),
-   de modo que no hay bucles.
+   Toda la capa API (src/lib/api/*) lee y escribe aquí. Quien escribe
+   con `commitState` publica un evento `gamert:state-changed`; el
+   `StateSync` invalida la caché de queries para que las pantallas se
+   re-pinten al instante con el estado vivo.
    ============================================================ */
 
 export const STORAGE_KEY = "gamert:state:v2";

@@ -5,7 +5,7 @@ import type { GameId } from "./games";
 
    El organizador únicamente define: nombre, juego, formato, reglas,
    premio y cupas. NO siembra, NO gestiona rondas ni resultados —
-   eso lo hace la app (ver lib/bracket.ts y store/AppContext.tsx).
+   eso lo hace la app (ver lib/bracket.ts y lib/api/scheduler.ts).
    ============================================================ */
 
 export type Modality = "Virtual" | "Presencial";

@@ -59,10 +59,10 @@
 | `Configuracion`, `Menu`, `Perfil` sobre queries                          | ✅ `useSettings`/`useUpdateSetting`, `useProfile`, `useEloPerGame`, `useSignOut`                                                    |
 | `Categorias`, `Organizaciones`, `Organizar`, `CrearTorneo` sobre queries | ✅ `useOrganizers`/`usePublisherFor`, `useCreateTournament`, `useCancelTournament` (con commit a `demo-store` + notificación)       |
 | Pantallas sin imports de `src/data`                                      | ✅ grep sobre `src/screens` y `src/components` vacío (sólo `AppContext`/`lib/api` importan datos)                                   |
-| TanStack Query + `AuthProvider`                                          | reemplaza persistencia de `AppContext`                                                                                              |
+| TanStack Query + `AuthProvider`                                          | ✅ sustituido por la capa API: sesión vía `useMe`/`useUserId`, auto-start en `scheduler.ts`, caché invalidada por `StateSync`       |
 | `Login`/`Registro` con Supabase Auth (email + Google)                    | ✅ pantallas sobre `useSignIn`/`useSignUp` (API → Supabase Auth en modo real, demo-store en demo)                                   |
-| Pantallas sin `useApp`                                                   | ✅ `useUserId`/`useBalance`/`useWallet`/`useAddFunds`; resta el `AuthProvider` para apagar el `AppContext` como store               |
-| `StateSync` invalida la caché con cada `commitState`                     | ✅ mismo comportamiento reactivo que tenía el `AppContext` (evento `gamert:state-changed`)                                          |
+| `AppContext` retirado como store                                         | ✅ `src/store` eliminado (auto-start movido a `api/scheduler.ts`, premiación en `matches.ts`); build cae ~8 kB                      |
+| `StateSync` invalida la caché con cada `commitState` + auto-start        | ✅ mismo comportamiento reactivo que tenía el `AppContext` (evento `gamert:state-changed`)                                          |
 | `Inscripcion` → RPC `join_tournament`                                    | 🟡 pantalla migrada (`useJoinTournament`); validaciones server-side pendientes                                                      |
 | Ciclo de partida → `api/matches` (reportar/confirmar/impugnar/resolver)  | ✅ `reportResult`/`confirmResult`/`disputeResult`/`resolveDispute` con commit a `demo-store` (ELO, premios, avisos); 4 tests        |
 | `Cuadro`/`Resultado` → RPC + realtime                                    | ✅ mutaciones vía `useConfirmResult`/`useResolveDispute`/`useReportResult`/`useDisputeResult`; realtime/`matches` tabla pendiente   |
