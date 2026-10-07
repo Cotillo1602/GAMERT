@@ -11,7 +11,7 @@
 | `signIn({email, password})`               | `api/auth.ts` | devuelve sesión; se persiste en cookie/localStorage del SDK      |
 | `signInWithGoogle()`                      | `api/auth.ts` | OAuth; redirige a `/home`                                        |
 | `signOut()`                               | `api/auth.ts` | cierra sesión y limpia cache de TanStack Query                   |
-| `getSession()` / `onAuthStateChange`      | `api/auth.ts` | consumido por `AuthProvider`                                     |
+| `getSession()` / `onAuthStateChange`      | `api/auth.ts` | consumido por los hooks `useMe`/`useUserId`                      |
 
 Modo demo (`isDemoMode()`): `signIn` acepta cualquier credencial y usa el
 usuario `u1` de los seeds; `signUp` crea el usuario en `localStorage`.
@@ -111,13 +111,16 @@ Usada por `create_tournament` y por la UI para mostrar/ocultar CTA.
 | `api/players.ts`       | `getProfile(id)`, `searchPlayers(q)`                                                                                            |
 | `api/notifications.ts` | `listMine()`, `unreadCount()`, `markAllRead()`                                                                                  |
 | `api/settings.ts`      | `getSettings()`, `updateSetting(patch)` (claves snake_case de `profiles.settings`)                                              |
+| `api/wallet.ts`        | `getBalance()`, `listWallet()`, `addFunds(amount)`                                                                              |
+| `api/app.ts`           | `resetApp()` (vuelve a `defaultState()`)                                                                                        |
+| `api/scheduler.ts`     | `autoStartDue()` (arranca torneos `upcoming` vencidos del usuario autenticado)                                                  |
 
 **Modo demo** (`isDemoMode()`, sin `VITE_SUPABASE_URL`): cada módulo opera sobre
-`src/lib/api/demo-store.ts`, el mismo snapshot `gamert:state:v2` que usa
-`AppContext`. Las escrituras pasan por `commitState()`, que guarda y publica el
-evento `gamert:state-changed`; el `AppContext` se rehidrata al escucharlo y él
-persiste con `saveState()` (sin evento), así que no hay bucles ni estados
-divergentes entre la capa API y las pantallas.
+`src/lib/api/demo-store.ts`, el snapshot `gamert:state:v2`. Las escrituras pasan
+por `commitState()`, que guarda en `localStorage` y publica el evento
+`gamert:state-changed`. `StateSync` (montado en `App`) se suscribe: invalida la
+caché de TanStack Query y lanza `autoStartDue()` con cada cambio, manteniendo la
+reactividad sin un store central.
 
 Todas se exponen como hooks TanStack Query con `queryKey` canónica:
 
@@ -127,6 +130,10 @@ Todas se exponen como hooks TanStack Query con `queryKey` canónica:
 ['ranking', gameId]                 ['profile', id]
 ['notifications']                   ['me']
 ```
+
+Hooks adicionales: `useMe`/`useUserId` (sesión), `useSignIn`/`useSignUp`/
+`useSignOut` (autenticación), `useUnreadCount` (layout), `useBalance`/
+`useWallet`/`useAddFunds` (billetera viva, reactiva a `commitState`).
 
 Invalidación tras cada RPC: `queryClient.invalidateQueries({queryKey:['bracket', id]})`, etc.
 
