@@ -3,8 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { AppBar, FilterRow, Screen } from "../components/layout/Layout";
 import { Cover, Badge, SectionTitle, Avatar } from "../components/ui/Display";
 import { Icon } from "../components/ui/Icon";
-import { useGames, useOrganizedBy, useOrganizers, useTournaments } from "../lib/api/hooks";
-import { useApp } from "../store/AppContext";
+import {
+  useGames,
+  useOrganizedBy,
+  useOrganizers,
+  useTournaments,
+  useUserId,
+} from "../lib/api/hooks";
 import "../styles/screens.css";
 
 const FILTERS = ["TODOS", "EDITORIAL", "COMUNIDAD", "MIS TORNEOS"] as const;
@@ -16,7 +21,7 @@ const FILTERS = ["TODOS", "EDITORIAL", "COMUNIDAD", "MIS TORNEOS"] as const;
  */
 export function Organizaciones() {
   const navigate = useNavigate();
-  const { userId } = useApp();
+  const userId = useUserId();
   const [filter, setFilter] = useState<string>(FILTERS[0]);
   const [following, setFollowing] = useState<string[]>([]);
 

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import { Icon, type IconName } from "../ui/Icon";
-import { useApp } from "../../store/AppContext";
+import { useUnreadCount } from "../../lib/api/hooks";
 import { SolidIcon } from "../ui/Icon";
 import "./Layout.css";
 
@@ -173,7 +173,7 @@ export function AppBar({
 }
 
 export function NotificationBell() {
-  const { unreadCount } = useApp();
+  const { data: unreadCount = 0 } = useUnreadCount();
   return (
     <span className="bell">
       <Icon name="bell" size={22} />

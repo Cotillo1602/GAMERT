@@ -5,9 +5,15 @@ import { Cover, Badge, SectionTitle } from "../components/ui/Display";
 import { ListItem } from "../components/ui/List";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
-import { useGame, useGames, useElo, useOrganizers, useTournaments } from "../lib/api/hooks";
+import {
+  useGame,
+  useGames,
+  useElo,
+  useOrganizers,
+  useTournaments,
+  useUserId,
+} from "../lib/api/hooks";
 import { eloTier } from "../lib/elo";
-import { useApp } from "../store/AppContext";
 import { EmptyState } from "./Torneos";
 import "../styles/screens.css";
 
@@ -77,7 +83,7 @@ export function Categorias() {
 export function Categoria() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { userId } = useApp();
+  const userId = useUserId();
 
   const { data: g } = useGame(id);
   const { data: all = [] } = useTournaments();

@@ -5,9 +5,8 @@ import { TabBar } from "../components/layout/TabBar";
 import { Cover, Badge, SectionTitle, Stat } from "../components/ui/Display";
 import { ListItem } from "../components/ui/List";
 import { Icon } from "../components/ui/Icon";
-import { useAllPlayers, useGames, useMyTournaments } from "../lib/api/hooks";
+import { useAllPlayers, useGames, useMyTournaments, useUserId } from "../lib/api/hooks";
 import { formatDate } from "../lib/utils";
-import { useApp } from "../store/AppContext";
 import { EmptyState } from "./Torneos";
 import "../styles/screens.css";
 
@@ -15,7 +14,7 @@ const FILTERS = ["Todos", "Próximos", "En curso", "Finalizados"] as const;
 
 export function MisTorneos() {
   const navigate = useNavigate();
-  const { userId } = useApp();
+  const userId = useUserId();
   const [filter, setFilter] = useState<string>("Todos");
 
   const { data: myTournaments = [] } = useMyTournaments(userId);

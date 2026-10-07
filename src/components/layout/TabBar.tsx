@@ -1,7 +1,7 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import { Icon, type IconName } from "../ui/Icon";
-import { useApp } from "../../store/AppContext";
+import { useUnreadCount } from "../../lib/api/hooks";
 import "./TabBar.css";
 
 /* Barra inferior de 85px con 4 destinos + botón central para organizar.
@@ -17,7 +17,7 @@ const TABS: { to: string; icon: IconName; label: string }[] = [
 export function TabBar({ onCreate }: { onCreate?: () => void }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { unreadCount } = useApp();
+  const { data: unreadCount = 0 } = useUnreadCount();
   const left = TABS.slice(0, 2);
   const right = TABS.slice(2);
 

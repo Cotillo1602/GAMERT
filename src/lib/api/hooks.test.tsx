@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { allTournaments } from "../../data/tournaments";
 import {
+  useAddFunds,
+  useBalance,
   useCancelTournament,
   useCreateTournament,
   useEloPerGame,
@@ -14,7 +16,10 @@ import {
   useTournament,
   useTournaments,
   useUnreadCount,
+  useUserId,
+  useWallet,
 } from "./hooks";
+import { commitState, defaultState, loadState, onStateChanged, START_BALANCE } from "./demo-store";
 
 function wrapperFor(qc: QueryClient) {
   return ({ children }: { children: ReactNode }) => (
@@ -149,5 +154,35 @@ describe("hooks TanStack Query sobre la capa API", () => {
       const after = mine.result.current.data ?? [];
       expect(after.find((t) => t.id === target.id)?.status).toBe("finished");
     });
+  });
+
+  it("useUserId y useBalance/wallet sirven el estado vivo de sesión y billetera", async () => {
+    commitState(() => ({ ...defaultState(), authenticated: true, balance: 999 }));
+
+    const { result: who } = renderHook(() => useUserId(), { wrapper: wrapperFor(newClient()) });
+    await waitFor(() => expect(who.current).toBeTruthy());
+
+    const { result: bal } = renderHook(() => useBalance(), { wrapper: wrapperFor(newClient()) });
+    const { result: wal } = renderHook(() => useWallet(), { wrapper: wrapperFor(newClient()) });
+    expect(bal.current).toBe(999);
+    expect(wal.current.length).toBeGreaterThan(0);
+  });
+
+  it("useAddFunds acredita saldo y notifica el cambio al store vivo", async () => {
+    const { result } = renderHook(() => useAddFunds(), { wrapper: wrapperFor(newClient()) });
+    act(() => result.current.mutate(100));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(loadState().balance).toBe(START_BALANCE + 100);
+  });
+
+  it("commitState dispara el evento que purga la caché de queries", async () => {
+    let fired = 0;
+    const off = onStateChanged(() => {
+      fired += 1;
+    });
+
+    act(() => commitState((s) => ({ ...s, balance: s.balance + 1 })));
+    expect(fired).toBe(1);
+    off();
   });
 });

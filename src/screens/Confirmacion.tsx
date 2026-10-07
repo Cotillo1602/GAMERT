@@ -4,16 +4,15 @@ import { SectionTitle, Divider, Badge } from "../components/ui/Display";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
 import { formatDate, money } from "../lib/utils";
-import { useAllPlayers, useIsJoined, useTournament } from "../lib/api/hooks";
+import { useAllPlayers, useIsJoined, useTournament, useUserId } from "../lib/api/hooks";
 import { rulesText } from "../lib/api/tournaments";
-import { useApp } from "../store/AppContext";
 import "../styles/screens.css";
 
 /** Confirmación post-inscripción: la app queda a cargo de la siembra. */
 export function Confirmacion() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { userId } = useApp();
+  const userId = useUserId();
 
   const { data: t, isLoading } = useTournament(id);
   const { data: players = [] } = useAllPlayers();

@@ -5,8 +5,14 @@ import { Avatar, Badge, SectionTitle, Divider } from "../components/ui/Display";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
 import { eloTier } from "../lib/elo";
-import { useAllPlayers, useElo, useGames, useProfile, useRanking } from "../lib/api/hooks";
-import { useApp } from "../store/AppContext";
+import {
+  useAllPlayers,
+  useElo,
+  useGames,
+  useProfile,
+  useRanking,
+  useUserId,
+} from "../lib/api/hooks";
 import { useToast } from "../components/layout/Toast";
 import "../styles/screens.css";
 
@@ -18,7 +24,7 @@ const FEATURED_COPY =
 export function Ranking() {
   const { gameId } = useParams();
   const navigate = useNavigate();
-  const { userId } = useApp();
+  const userId = useUserId();
   const toast = useToast();
 
   const { data: games = [] } = useGames();

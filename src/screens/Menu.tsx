@@ -5,14 +5,14 @@ import { ListItem } from "../components/ui/List";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
 import { appVersion } from "../lib/api/app";
-import { useProfile, useSignOut, useUnreadCount } from "../lib/api/hooks";
-import { useApp } from "../store/AppContext";
+import { useBalance, useProfile, useSignOut, useUnreadCount, useUserId } from "../lib/api/hooks";
 import { useToast } from "../components/layout/Toast";
 import "../styles/screens.css";
 
 export function Menu() {
   const navigate = useNavigate();
-  const { userId, balance } = useApp();
+  const userId = useUserId();
+  const balance = useBalance();
   const toast = useToast();
 
   const { data: me } = useProfile(userId);

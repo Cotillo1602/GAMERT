@@ -9,9 +9,9 @@ import {
   useOrganizedBy,
   useOrganizers,
   useProfile,
+  useUserId,
 } from "../lib/api/hooks";
 import { FORMAT_LABELS, todayISO } from "../lib/api/tournaments";
-import { useApp } from "../store/AppContext";
 import { useToast } from "../components/layout/Toast";
 import "../styles/screens.css";
 import "../styles/organizer.css";
@@ -26,7 +26,7 @@ import "../styles/organizer.css";
 
 export function Organizar() {
   const navigate = useNavigate();
-  const { userId } = useApp();
+  const userId = useUserId();
   const toast = useToast();
 
   const { data: me } = useProfile(userId);

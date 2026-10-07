@@ -12,9 +12,9 @@ import {
   useGame,
   useResolveDispute,
   useTournament,
+  useUserId,
 } from "../lib/api/hooks";
 import { eloDeltaFor } from "../lib/api/matches";
-import { useApp } from "../store/AppContext";
 import { formatDate } from "../lib/utils";
 import "../styles/screens.css";
 
@@ -25,7 +25,7 @@ import "../styles/screens.css";
 export function Cuadro() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { userId } = useApp();
+  const userId = useUserId();
 
   const confirm = useConfirmResult();
   const resolveD = useResolveDispute();

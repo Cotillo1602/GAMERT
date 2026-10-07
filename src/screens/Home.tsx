@@ -6,22 +6,24 @@ import { ListTile } from "../components/ui/List";
 import { Icon } from "../components/ui/Icon";
 import {
   useAllPlayers,
+  useBalance,
   useBracket,
   useElo,
   useGames,
   useProfile,
   useTournaments,
+  useUserId,
 } from "../lib/api/hooks";
 import type { Tournament } from "../lib/api/tournaments";
 import { nextMatchFor } from "../lib/bracket";
 import { eloTier } from "../lib/elo";
 import { formatDate } from "../lib/utils";
-import { useApp } from "../store/AppContext";
 import "../styles/screens.css";
 
 export function Home() {
   const navigate = useNavigate();
-  const { userId, balance } = useApp();
+  const userId = useUserId();
+  const balance = useBalance();
 
   const { data: me } = useProfile(userId);
   const { data: tournaments = [] } = useTournaments();

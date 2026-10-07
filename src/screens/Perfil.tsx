@@ -6,13 +6,14 @@ import { ListItem } from "../components/ui/List";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
 import {
+  useBalance,
   useEloPerGame,
   useGames,
   useMyTournaments,
   useProfile,
   useSignOut,
+  useUserId,
 } from "../lib/api/hooks";
-import { useApp } from "../store/AppContext";
 import { useToast } from "../components/layout/Toast";
 import { eloTier } from "../lib/elo";
 import type { Game } from "../lib/api/games";
@@ -21,7 +22,8 @@ import "../styles/screens.css";
 
 export function Perfil() {
   const navigate = useNavigate();
-  const { userId, balance } = useApp();
+  const userId = useUserId();
+  const balance = useBalance();
   const toast = useToast();
 
   const { data: player } = useProfile(userId);

@@ -5,7 +5,7 @@ import { Button } from "../components/ui/Button";
 import { Input, Toggle } from "../components/ui/Input";
 import { Icon, type IconName } from "../components/ui/Icon";
 import { Chip } from "../components/ui/Display";
-import { useCreateTournament, useElo, useGames, useProfile } from "../lib/api/hooks";
+import { useCreateTournament, useElo, useGames, useProfile, useUserId } from "../lib/api/hooks";
 import type { GameId } from "../lib/api/games";
 import {
   FORMAT_LABELS,
@@ -14,7 +14,6 @@ import {
   type Prize,
   type Rules,
 } from "../lib/api/tournaments";
-import { useApp } from "../store/AppContext";
 import { useToast } from "../components/layout/Toast";
 import { eloTier } from "../lib/elo";
 import "../styles/screens.css";
@@ -29,7 +28,7 @@ const FORMATS: Format[] = ["eliminacion", "grupos", "suizo", "doble_eliminacion"
 
 export function CrearTorneo() {
   const navigate = useNavigate();
-  const { userId } = useApp();
+  const userId = useUserId();
   const toast = useToast();
 
   const { data: me } = useProfile(userId);

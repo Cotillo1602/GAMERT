@@ -14,8 +14,8 @@ import {
   useGame,
   useReportResult,
   useTournament,
+  useUserId,
 } from "../lib/api/hooks";
-import { useApp } from "../store/AppContext";
 import { useToast } from "../components/layout/Toast";
 import "../styles/screens.css";
 
@@ -27,7 +27,7 @@ export function Resultado() {
   const { id = "", matchId = "" } = useParams();
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { userId } = useApp();
+  const userId = useUserId();
   const toast = useToast();
 
   const report = useReportResult();

@@ -4,7 +4,7 @@ import { AppBar, Screen } from "../components/layout/Layout";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Icon } from "../components/ui/Icon";
-import { useApp } from "../store/AppContext";
+import { useAddFunds, useBalance, useWallet } from "../lib/api/hooks";
 import { useToast } from "../components/layout/Toast";
 import { money } from "../lib/utils";
 import "../styles/screens.css";
@@ -18,7 +18,9 @@ const PACKAGES = [
 
 export function Billetera() {
   const navigate = useNavigate();
-  const { balance, wallet, addFunds } = useApp();
+  const balance = useBalance();
+  const wallet = useWallet();
+  const addFunds = useAddFunds();
   const toast = useToast();
 
   const [mode, setMode] = useState<"recarga" | "retiro">("recarga");
@@ -40,7 +42,7 @@ export function Billetera() {
     window.setTimeout(() => {
       setLoading(false);
       if (mode === "recarga") {
-        addFunds(total);
+        addFunds.mutate(total);
         toast.success(`Recarga realizada: ${money(total)}`);
       } else {
         toast.info(`Retiro de ${money(Number(amount))} en proceso`);

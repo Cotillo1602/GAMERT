@@ -4,8 +4,14 @@ import { AppBar, FilterRow, Screen } from "../components/layout/Layout";
 import { Avatar, Badge, SectionTitle } from "../components/ui/Display";
 import { Icon } from "../components/ui/Icon";
 import { eloTier } from "../lib/elo";
-import { useAllPlayers, useGame, useRanking, useStandings, useTournament } from "../lib/api/hooks";
-import { useApp } from "../store/AppContext";
+import {
+  useAllPlayers,
+  useGame,
+  useRanking,
+  useStandings,
+  useTournament,
+  useUserId,
+} from "../lib/api/hooks";
 import "../styles/screens.css";
 
 const TABS = ["Clasificación", "Eliminación"] as const;
@@ -17,7 +23,7 @@ const TABS = ["Clasificación", "Eliminación"] as const;
 export function Clasificacion() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { userId } = useApp();
+  const userId = useUserId();
   const [tab, setTab] = useState<string>(TABS[0]);
 
   const { data: t } = useTournament(id);

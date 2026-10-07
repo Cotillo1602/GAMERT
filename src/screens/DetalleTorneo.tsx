@@ -12,16 +12,16 @@ import {
   useIsJoined,
   useOrganizedBy,
   useTournament,
+  useUserId,
 } from "../lib/api/hooks";
 import { rulesText } from "../lib/api/tournaments";
-import { useApp } from "../store/AppContext";
 import { useToast } from "../components/layout/Toast";
 import "../styles/screens.css";
 
 export function DetalleTorneo() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { userId } = useApp();
+  const userId = useUserId();
   const toast = useToast();
 
   const { data: t, isLoading } = useTournament(id);

@@ -1,7 +1,11 @@
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { signIn, signOut, signUp, type Session } from "./auth";
+import { getSession, signIn, signOut, signUp, type Session } from "./auth";
+import type { WalletMovement } from "../../data/app";
 import type { Game } from "../../data/games";
-import type { Player } from "../../data/players";
+import { CURRENT_USER_ID, type Player } from "../../data/players";
+import { loadState, onStateChanged } from "./demo-store";
+import { addFunds } from "./wallet";
 import { eloOf, eloPerGame, rankingFor } from "./elo";
 import { publisherFor, listOrganizers } from "./orgs";
 import { getGame, listGames } from "./games";
@@ -178,6 +182,29 @@ export function useSettings(): Query<Awaited<ReturnType<typeof getSettings>>> {
   return useQuery({ queryKey: queryKeys.settings(), queryFn: () => getSettings() });
 }
 
+export function useMe(): Query<Session | null> {
+  return useQuery({ queryKey: queryKeys.me(), queryFn: () => getSession() });
+}
+
+/** Id del usuario actual; en demo siempre el jugador local. */
+export function useUserId(): string {
+  const { data } = useMe();
+  return data?.userId ?? CURRENT_USER_ID;
+}
+
+/** Saldo y billetera vivos (demo-store), reactivos a `commitState`. */
+export function useBalance(): number {
+  const [balance, setBalance] = useState(() => loadState().balance);
+  useEffect(() => onStateChanged(() => setBalance(loadState().balance)), []);
+  return balance;
+}
+
+export function useWallet(): WalletMovement[] {
+  const [wallet, setWallet] = useState(() => loadState().wallet);
+  useEffect(() => onStateChanged(() => setWallet(loadState().wallet)), []);
+  return wallet;
+}
+
 /* ---------- mutaciones ---------- */
 
 export interface JoinVariables {
@@ -222,6 +249,10 @@ export function useMarkAllRead() {
       qc.invalidateQueries({ queryKey: ["unread"] });
     },
   });
+}
+
+export function useAddFunds() {
+  return useMutation({ mutationFn: (amount: number) => addFunds(amount) });
 }
 
 export function useUpdateSetting() {

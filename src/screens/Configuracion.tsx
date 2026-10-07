@@ -7,13 +7,12 @@ import { Icon } from "../components/ui/Icon";
 import { appVersion } from "../lib/api/app";
 import { useSettings, useUpdateSetting } from "../lib/api/hooks";
 import type { Settings } from "../lib/api/settings";
-import { useApp } from "../store/AppContext";
+import { resetApp } from "../lib/api/app";
 import { useToast } from "../components/layout/Toast";
 import "../styles/screens.css";
 
 export function Configuracion() {
   const navigate = useNavigate();
-  const { reset } = useApp();
   const toast = useToast();
 
   const { data: settings } = useSettings();
@@ -121,7 +120,7 @@ export function Configuracion() {
           variant="danger"
           iconLeft="trash"
           onClick={() => {
-            reset();
+            resetApp();
             toast.success("Datos locales restablecidos");
             navigate("/login", { replace: true });
           }}
