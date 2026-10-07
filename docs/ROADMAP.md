@@ -70,8 +70,9 @@
 | `CrearTorneo` → RPC `create_tournament` + Zod                            | 🟡 pantalla migrada (`useCreateTournament`); servidor pendiente                                                                     |
 | `Notificaciones` → tabla + realtime                                      | 🟡 pantalla migrada (`useNotifications`); tabla/feed pendientes                                                                     |
 | `Configuracion` → `profiles.settings`                                    | 🟡 pantalla migrada (`useUpdateSetting`); persistencia server pendiente                                                             |
-| Añadir el grep de CI como gate                                           | `npm run build` sin imports de `src/data` fuera de `src/lib/api` en `src/screens`                                                   |
-| Limpieza: eliminar seeds no usados                                       | sólo tras el cambio de cada pantalla                                                                                                |
+| Smoke de integración de pantallas                                        | ✅ `screens.test.tsx`: 26 rutas montadas con providers reales (QueryClient+Router+Toast), recarga de billetera y cierre de sesión   |
+| Añadir el grep de CI como gate                                           | ✅ gate activo en `.github/workflows/ci.yml` (grep de `src/data` en `src/screens` y `src/components`)                               |
+| Limpieza: eliminar seeds no usados                                       | ✅ ADR-10: `seed:gen` y `types:gen` reproducibles sin drift; los 13 torneos/70 jugadores siguen en uso                              |
 
 **Criterio de salida:** `npm run build` sin imports de `src/data` fuera de
 `src/lib/api` (verificado con grep en CI) y flujo completo con backend real.
