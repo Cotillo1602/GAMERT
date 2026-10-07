@@ -4,7 +4,7 @@ import { AppBar, Screen } from "../components/layout/Layout";
 import { Button } from "../components/ui/Button";
 import { Input, PasswordInput, Checkbox } from "../components/ui/Input";
 import { Icon } from "../components/ui/Icon";
-import { useApp } from "../store/AppContext";
+import { useSignUp } from "../lib/api/hooks";
 import { useToast } from "../components/layout/Toast";
 import "../styles/screens.css";
 
@@ -12,7 +12,7 @@ const GAMES = ["FIFA26", "VALORANT", "LOL", "MINECRAFT", "FORTNITE", "TEKKEN 8",
 
 export function Registro() {
   const navigate = useNavigate();
-  const { signIn } = useApp();
+  const signUp = useSignUp();
   const toast = useToast();
 
   const [step, setStep] = useState(1);
@@ -43,10 +43,17 @@ export function Registro() {
     setError(undefined);
     setLoading(true);
     window.setTimeout(() => {
-      setLoading(false);
-      signIn();
-      toast.success("¡Cuenta creada! Bienvenido a GAMERT");
-      navigate("/home", { replace: true });
+      signUp.mutate(
+        { email, password, name },
+        {
+          onSuccess: () => {
+            setLoading(false);
+            toast.success("¡Cuenta creada! Bienvenido a GAMERT");
+            navigate("/home", { replace: true });
+          },
+          onError: () => setLoading(false),
+        },
+      );
     }, 1000);
   }
 

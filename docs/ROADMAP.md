@@ -60,7 +60,7 @@
 | `Categorias`, `Organizaciones`, `Organizar`, `CrearTorneo` sobre queries | ✅ `useOrganizers`/`usePublisherFor`, `useCreateTournament`, `useCancelTournament` (con commit a `demo-store` + notificación)       |
 | Pantallas sin imports de `src/data`                                      | ✅ grep sobre `src/screens` y `src/components` vacío (sólo `AppContext`/`lib/api` importan datos)                                   |
 | TanStack Query + `AuthProvider`                                          | reemplaza persistencia de `AppContext`                                                                                              |
-| `Login`/`Registro` con Supabase Auth (email + Google)                    |                                                                                                                                     |
+| `Login`/`Registro` con Supabase Auth (email + Google)                    | ✅ pantallas sobre `useSignIn`/`useSignUp` (API → Supabase Auth en modo real, demo-store en demo)                                   |
 | `Inscripcion` → RPC `join_tournament`                                    | 🟡 pantalla migrada (`useJoinTournament`); validaciones server-side pendientes                                                      |
 | Ciclo de partida → `api/matches` (reportar/confirmar/impugnar/resolver)  | ✅ `reportResult`/`confirmResult`/`disputeResult`/`resolveDispute` con commit a `demo-store` (ELO, premios, avisos); 4 tests        |
 | `Cuadro`/`Resultado` → RPC + realtime                                    | ✅ mutaciones vía `useConfirmResult`/`useResolveDispute`/`useReportResult`/`useDisputeResult`; realtime/`matches` tabla pendiente   |

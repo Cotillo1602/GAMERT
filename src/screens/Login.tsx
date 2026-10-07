@@ -4,13 +4,13 @@ import { AppBar, Logo, Screen } from "../components/layout/Layout";
 import { Button } from "../components/ui/Button";
 import { PasswordInput } from "../components/ui/Input";
 import { Icon } from "../components/ui/Icon";
-import { useApp } from "../store/AppContext";
+import { useSignIn } from "../lib/api/hooks";
 import { useToast } from "../components/layout/Toast";
 import "../styles/screens.css";
 
 export function Login() {
   const navigate = useNavigate();
-  const { signIn } = useApp();
+  const signIn = useSignIn();
   const toast = useToast();
 
   const [email, setEmail] = useState("");
@@ -25,10 +25,17 @@ export function Login() {
     setError(undefined);
     setLoading(true);
     window.setTimeout(() => {
-      setLoading(false);
-      signIn();
-      toast.success("Bienvenido de nuevo");
-      navigate("/home", { replace: true });
+      signIn.mutate(
+        { email, password },
+        {
+          onSuccess: () => {
+            setLoading(false);
+            toast.success("Bienvenido de nuevo");
+            navigate("/home", { replace: true });
+          },
+          onError: () => setLoading(false),
+        },
+      );
     }, 900);
   }
 
